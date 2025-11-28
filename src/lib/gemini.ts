@@ -80,6 +80,78 @@ Responda APENAS com um JSON válido no formato:
   }
 }
 
+export interface PlanejamentoProcessado {
+  tipo: 'RECEITA' | 'DESPESA';
+  valor: number;
+  categoria: string;
+  descricao: string;
+  dataVencimento: Date;
+  recorrente: boolean;
+}
+
+export async function processarPlanejamento(texto: string, categoriasExistentes: string[]): Promise<PlanejamentoProcessado[]> {
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+
+  const hoje = new Date();
+  const mesAtual = hoje.getMonth();
+  const anoAtual = hoje.getFullYear();
+
+  const prompt = `Você é um assistente financeiro. Analise o texto e extraia os PLANEJAMENTOS de contas futuras.
+
+TEXTO DO USUÁRIO:
+"${texto}"
+
+CATEGORIAS EXISTENTES NO SISTEMA:
+${[...CATEGORIAS_CONHECIDAS.DESPESAS_FIXAS, ...CATEGORIAS_CONHECIDAS.DESPESAS_VARIAVEIS, ...CATEGORIAS_CONHECIDAS.RECEITAS, ...categoriasExistentes].join(', ')}
+
+REGRAS:
+1. Se mencionar "pagar", "conta", "boleto", "mensalidade" → tipo = "DESPESA"
+2. Se mencionar "receber", "cliente", "salário", "pagamento" → tipo = "RECEITA"
+3. Use uma categoria existente se possível
+4. IMPORTANTE: Se o usuário mencionar só o dia (ex: "dia 30", "dia 5"), use o MÊS ATUAL (${mesAtual + 1}) e ANO ATUAL (${anoAtual})
+5. Se o dia já passou no mês atual, use o próximo mês
+6. Data de hoje: ${hoje.toISOString().split('T')[0]}
+7. Identifique se é recorrente (todo mês, mensal, fixo)
+
+Responda APENAS com um JSON válido no formato:
+{
+  "planejamentos": [
+    {
+      "tipo": "DESPESA" ou "RECEITA",
+      "valor": 1500.00,
+      "categoria": "ALUGUEL",
+      "descricao": "Pagar aluguel",
+      "dataVencimento": "2025-11-30",
+      "recorrente": true
+    }
+  ]
+}`;
+
+  try {
+    const result = await model.generateContent(prompt);
+    const response = result.response.text();
+
+    const jsonMatch = response.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error('Não foi possível extrair JSON da resposta');
+    }
+
+    const parsed = JSON.parse(jsonMatch[0]);
+
+    return parsed.planejamentos.map((p: { tipo: string; valor: number; categoria: string; descricao: string; dataVencimento: string; recorrente: boolean }) => ({
+      tipo: p.tipo as 'RECEITA' | 'DESPESA',
+      valor: Number(p.valor),
+      categoria: p.categoria.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''),
+      descricao: p.descricao,
+      dataVencimento: new Date(p.dataVencimento),
+      recorrente: p.recorrente || false
+    }));
+  } catch (error) {
+    console.error('Erro ao processar planejamento com Gemini:', error);
+    throw error;
+  }
+}
+
 export async function processarImagem(imagemBase64: string, categoriasExistentes: string[]): Promise<LancamentoProcessado[]> {
   const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
