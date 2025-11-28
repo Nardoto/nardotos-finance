@@ -29,6 +29,7 @@ export async function POST(request: NextRequest) {
 
     const contasRef = collection(db, 'planejamento');
     const docRef = await addDoc(contasRef, {
+      tipo: body.tipo || 'DESPESA',
       descricao: body.descricao,
       valor: body.valor,
       dataVencimento: Timestamp.fromDate(new Date(body.dataVencimento)),
