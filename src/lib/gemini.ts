@@ -138,14 +138,18 @@ Responda APENAS com um JSON válido no formato:
 
     const parsed = JSON.parse(jsonMatch[0]);
 
-    return parsed.planejamentos.map((p: { tipo: string; valor: number; categoria: string; descricao: string; dataVencimento: string; recorrente: boolean }) => ({
-      tipo: p.tipo as 'RECEITA' | 'DESPESA',
-      valor: Number(p.valor),
-      categoria: p.categoria.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''),
-      descricao: p.descricao,
-      dataVencimento: new Date(p.dataVencimento),
-      recorrente: p.recorrente || false
-    }));
+    return parsed.planejamentos.map((p: { tipo: string; valor: number; categoria: string; descricao: string; dataVencimento: string; recorrente: boolean }) => {
+      // Corrigir problema de timezone: adicionar T12:00:00 para evitar que UTC vire dia anterior
+      const dataStr = p.dataVencimento.includes('T') ? p.dataVencimento : `${p.dataVencimento}T12:00:00`;
+      return {
+        tipo: p.tipo as 'RECEITA' | 'DESPESA',
+        valor: Number(p.valor),
+        categoria: p.categoria.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''),
+        descricao: p.descricao,
+        dataVencimento: new Date(dataStr),
+        recorrente: p.recorrente || false
+      };
+    });
   } catch (error) {
     console.error('Erro ao processar planejamento com Gemini:', error);
     throw error;

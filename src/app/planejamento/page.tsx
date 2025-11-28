@@ -22,7 +22,32 @@ export default function Planejamento() {
   const [erro, setErro] = useState('');
   const [sucesso, setSucesso] = useState('');
   const [filtro, setFiltro] = useState<'todas' | 'pendentes' | 'atrasadas' | 'pagas'>('pendentes');
+  const [mesSelecionado, setMesSelecionado] = useState(() => {
+    const hoje = new Date();
+    return `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;
+  });
   const router = useRouter();
+
+  const meses = [
+    { valor: '01', nome: 'Janeiro' }, { valor: '02', nome: 'Fevereiro' },
+    { valor: '03', nome: 'Marco' }, { valor: '04', nome: 'Abril' },
+    { valor: '05', nome: 'Maio' }, { valor: '06', nome: 'Junho' },
+    { valor: '07', nome: 'Julho' }, { valor: '08', nome: 'Agosto' },
+    { valor: '09', nome: 'Setembro' }, { valor: '10', nome: 'Outubro' },
+    { valor: '11', nome: 'Novembro' }, { valor: '12', nome: 'Dezembro' }
+  ];
+
+  const getNomeMes = (mesAno: string) => {
+    const [ano, mes] = mesAno.split('-');
+    const nomeMes = meses.find(m => m.valor === mes)?.nome || '';
+    return `${nomeMes} ${ano}`;
+  };
+
+  const mudarMes = (direcao: number) => {
+    const [ano, mes] = mesSelecionado.split('-').map(Number);
+    const novaData = new Date(ano, mes - 1 + direcao, 1);
+    setMesSelecionado(`${novaData.getFullYear()}-${String(novaData.getMonth() + 1).padStart(2, '0')}`);
+  };
 
   useEffect(() => {
     const usuarioSalvo = localStorage.getItem('usuario');
@@ -129,7 +154,14 @@ export default function Planejamento() {
     return diffDias >= 0 && diffDias <= 3;
   };
 
-  const contasFiltradas = contas.filter(c => {
+  // Filtrar por mes selecionado
+  const contasDoMes = contas.filter(c => {
+    const dataVenc = new Date(c.dataVencimento);
+    const mesVenc = `${dataVenc.getFullYear()}-${String(dataVenc.getMonth() + 1).padStart(2, '0')}`;
+    return mesVenc === mesSelecionado;
+  });
+
+  const contasFiltradas = contasDoMes.filter(c => {
     if (filtro === 'todas') return true;
     if (filtro === 'pendentes') return !c.paga;
     if (filtro === 'atrasadas') return isAtrasada(c);
@@ -137,14 +169,19 @@ export default function Planejamento() {
     return true;
   }).sort((a, b) => new Date(a.dataVencimento).getTime() - new Date(b.dataVencimento).getTime());
 
-  const contasAtrasadas = contas.filter(c => isAtrasada(c));
-  const contasPendentes = contas.filter(c => !c.paga);
-  const despesasPendentes = contasPendentes.filter(c => c.tipo === 'DESPESA');
-  const receitasPendentes = contasPendentes.filter(c => c.tipo === 'RECEITA');
-  const totalAtrasado = contasAtrasadas.reduce((acc, c) => acc + c.valor, 0);
-  const totalDespesas = despesasPendentes.reduce((acc, c) => acc + c.valor, 0);
-  const totalReceitas = receitasPendentes.reduce((acc, c) => acc + c.valor, 0);
-  const saldoPrevisto = totalReceitas - totalDespesas;
+  // Estatisticas do mes selecionado
+  const contasAtrasadasMes = contasDoMes.filter(c => isAtrasada(c));
+  const contasPendentesMes = contasDoMes.filter(c => !c.paga);
+  const despesasPendentesMes = contasPendentesMes.filter(c => c.tipo === 'DESPESA');
+  const receitasPendentesMes = contasPendentesMes.filter(c => c.tipo === 'RECEITA');
+  const totalAtrasadoMes = contasAtrasadasMes.reduce((acc, c) => acc + c.valor, 0);
+  const totalDespesasMes = despesasPendentesMes.reduce((acc, c) => acc + c.valor, 0);
+  const totalReceitasMes = receitasPendentesMes.reduce((acc, c) => acc + c.valor, 0);
+  const saldoPrevistoMes = totalReceitasMes - totalDespesasMes;
+
+  // Alertas gerais (todos os meses)
+  const contasAtrasadasGeral = contas.filter(c => isAtrasada(c));
+  const totalAtrasadoGeral = contasAtrasadasGeral.reduce((acc, c) => acc + c.valor, 0);
 
   if (!usuario) return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div></div>;
 
@@ -162,14 +199,21 @@ export default function Planejamento() {
         <button onClick={() => router.push('/metas')} className="flex-1 border border-gray-700 text-white py-2 px-3 rounded-lg">Metas</button>
       </div>
 
-      {contasAtrasadas.length > 0 && (
+      {/* Seletor de Mes */}
+      <div className="flex items-center justify-center gap-4 mb-6">
+        <button onClick={() => mudarMes(-1)} className="text-gray-400 hover:text-white text-xl px-2">&lt;</button>
+        <h2 className="text-white font-bold text-lg min-w-[150px] text-center">{getNomeMes(mesSelecionado)}</h2>
+        <button onClick={() => mudarMes(1)} className="text-gray-400 hover:text-white text-xl px-2">&gt;</button>
+      </div>
+
+      {contasAtrasadasGeral.length > 0 && (
         <div className="bg-red-900/30 border border-red-700 rounded-lg p-4 mb-6">
           <div className="flex items-center gap-2 mb-2">
             <span className="text-red-500 text-xl">!</span>
             <h3 className="text-red-400 font-bold">Contas Atrasadas!</h3>
           </div>
           <p className="text-red-300 text-sm">
-            Voce tem <strong>{contasAtrasadas.length}</strong> conta(s) atrasada(s) totalizando <strong>{formatarValor(totalAtrasado)}</strong>
+            Voce tem <strong>{contasAtrasadasGeral.length}</strong> conta(s) atrasada(s) totalizando <strong>{formatarValor(totalAtrasadoGeral)}</strong>
           </p>
         </div>
       )}
@@ -177,16 +221,16 @@ export default function Planejamento() {
       <div className="grid grid-cols-2 gap-3 mb-6">
         <div className="border border-gray-800 rounded-lg p-3 text-center">
           <p className="text-xs text-gray-500">A receber</p>
-          <p className="text-lg font-bold text-green-500">{formatarValor(totalReceitas)}</p>
+          <p className="text-lg font-bold text-green-500">{formatarValor(totalReceitasMes)}</p>
         </div>
         <div className="border border-gray-800 rounded-lg p-3 text-center">
           <p className="text-xs text-gray-500">A pagar</p>
-          <p className="text-lg font-bold text-red-500">{formatarValor(totalDespesas)}</p>
+          <p className="text-lg font-bold text-red-500">{formatarValor(totalDespesasMes)}</p>
         </div>
       </div>
       <div className="border border-gray-800 rounded-lg p-3 text-center mb-6">
         <p className="text-xs text-gray-500">Saldo previsto</p>
-        <p className={`text-xl font-bold ${saldoPrevisto >= 0 ? 'text-green-500' : 'text-red-500'}`}>{formatarValor(saldoPrevisto)}</p>
+        <p className={`text-xl font-bold ${saldoPrevistoMes >= 0 ? 'text-green-500' : 'text-red-500'}`}>{formatarValor(saldoPrevistoMes)}</p>
       </div>
 
       <div className="border border-gray-800 rounded-lg p-4 mb-6">
@@ -216,8 +260,8 @@ export default function Planejamento() {
             onClick={() => setFiltro(f)}
             className={`px-3 py-1 rounded-full ${filtro === f ? 'bg-white text-black' : 'border border-gray-700 text-gray-400'}`}
           >
-            {f === 'pendentes' && `Pendentes (${contasPendentes.length})`}
-            {f === 'atrasadas' && `Atrasadas (${contasAtrasadas.length})`}
+            {f === 'pendentes' && `Pendentes (${contasPendentesMes.length})`}
+            {f === 'atrasadas' && `Atrasadas (${contasAtrasadasMes.length})`}
             {f === 'pagas' && `Pagas`}
             {f === 'todas' && `Todas`}
           </button>
