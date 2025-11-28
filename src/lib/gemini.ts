@@ -22,7 +22,7 @@ const CATEGORIAS_CONHECIDAS = {
 };
 
 export async function processarTexto(texto: string, categoriasExistentes: string[]): Promise<LancamentoProcessado[]> {
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
   const prompt = `Você é um assistente financeiro. Analise o texto abaixo e extraia os lançamentos financeiros.
 
@@ -81,7 +81,7 @@ Responda APENAS com um JSON válido no formato:
 }
 
 export async function processarImagem(imagemBase64: string, categoriasExistentes: string[]): Promise<LancamentoProcessado[]> {
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
   const prompt = `Você é um assistente financeiro. Analise esta imagem de extrato bancário e extraia TODOS os lançamentos visíveis.
 
