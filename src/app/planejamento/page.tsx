@@ -17,6 +17,7 @@ interface ContaFutura {
 export default function Planejamento() {
   const [usuario, setUsuario] = useState<string | null>(null);
   const [contas, setContas] = useState<ContaFutura[]>([]);
+  const [categorias, setCategorias] = useState<string[]>([]);
   const [novoTipo, setNovoTipo] = useState<'RECEITA' | 'DESPESA'>('DESPESA');
   const [novaDescricao, setNovaDescricao] = useState('');
   const [novoValor, setNovoValor] = useState('');
@@ -39,16 +40,21 @@ export default function Planejamento() {
 
   const carregarContas = async () => {
     try {
-      const res = await fetch('/api/planejamento');
-      const data = await res.json();
-      setContas(data.contas || []);
+      const [resContas, resCategorias] = await Promise.all([
+        fetch('/api/planejamento'),
+        fetch('/api/categorias')
+      ]);
+      const dataContas = await resContas.json();
+      const dataCategorias = await resCategorias.json();
+      setContas(dataContas.contas || []);
+      setCategorias(dataCategorias.categorias || []);
     } catch (error) {
       console.error('Erro ao carregar contas:', error);
     }
   };
 
   const adicionarConta = async () => {
-    if (!novaDescricao || !novoValor || !novaData) {
+    if (!novaDescricao || !novoValor || !novaData || !novaCategoria) {
       setErro('Preencha todos os campos');
       return;
     }
@@ -62,7 +68,7 @@ export default function Planejamento() {
           descricao: novaDescricao,
           valor: Number(novoValor),
           dataVencimento: novaData,
-          categoria: novaCategoria.toUpperCase() || 'OUTROS',
+          categoria: novaCategoria,
           recorrente,
           paga: false,
           usuario
@@ -165,7 +171,16 @@ export default function Planejamento() {
             <input type="number" value={novoValor} onChange={(e) => setNovoValor(e.target.value)} className="flex-1 bg-black border border-gray-700 rounded p-2 text-white" placeholder="Valor" />
             <input type="date" value={novaData} onChange={(e) => setNovaData(e.target.value)} className="flex-1 bg-black border border-gray-700 rounded p-2 text-white" />
           </div>
-          <input value={novaCategoria} onChange={(e) => setNovaCategoria(e.target.value)} className="w-full bg-black border border-gray-700 rounded p-2 text-white" placeholder={novoTipo === 'RECEITA' ? 'Categoria (ex: FREELANCE)' : 'Categoria (ex: ALUGUEL)'} />
+          <select
+            value={novaCategoria}
+            onChange={(e) => setNovaCategoria(e.target.value)}
+            className="w-full bg-black border border-gray-700 rounded p-2 text-white"
+          >
+            <option value="">Selecione uma categoria</option>
+            {categorias.map((cat) => (
+              <option key={cat} value={cat}>{cat}</option>
+            ))}
+          </select>
           <label className="flex items-center gap-2 text-gray-400 text-sm">
             <input type="checkbox" checked={recorrente} onChange={(e) => setRecorrente(e.target.checked)} className="rounded" />
             Recorrente (mensal)

@@ -21,6 +21,7 @@ export default function Metas() {
   const [usuario, setUsuario] = useState<string | null>(null);
   const [metas, setMetas] = useState<Meta[]>([]);
   const [gastos, setGastos] = useState<GastoCategoria[]>([]);
+  const [categorias, setCategorias] = useState<string[]>([]);
   const [novaCategoria, setNovaCategoria] = useState('');
   const [novoLimite, setNovoLimite] = useState('');
   const [erro, setErro] = useState('');
@@ -43,14 +44,17 @@ export default function Metas() {
 
   const carregarDados = async () => {
     try {
-      const [resMetas, resResumo] = await Promise.all([
+      const [resMetas, resResumo, resCategorias] = await Promise.all([
         fetch('/api/metas'),
-        fetch(`/api/resumo?mes=${mesAtual}`)
+        fetch(`/api/resumo?mes=${mesAtual}`),
+        fetch('/api/categorias')
       ]);
       const dataMetas = await resMetas.json();
       const dataResumo = await resResumo.json();
+      const dataCategorias = await resCategorias.json();
 
       setMetas(dataMetas.metas || []);
+      setCategorias(dataCategorias.categorias || []);
 
       // Calcular gastos por categoria com metas
       const gastosComMetas = (dataResumo.porCategoria || []).map((g: { categoria: string; valor: number }) => {
@@ -70,7 +74,7 @@ export default function Metas() {
 
   const adicionarMeta = async () => {
     if (!novaCategoria || !novoLimite) {
-      setErro('Preencha categoria e limite');
+      setErro('Selecione uma categoria e preencha o limite');
       return;
     }
 
@@ -79,7 +83,7 @@ export default function Metas() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          categoria: novaCategoria.toUpperCase(),
+          categoria: novaCategoria,
           limite: Number(novoLimite),
           mes: mesAtual
         }),
@@ -125,7 +129,16 @@ export default function Metas() {
       <div className="border border-gray-800 rounded-lg p-4 mb-6">
         <h3 className="text-gray-500 font-medium mb-3">Nova meta de gasto</h3>
         <div className="space-y-2">
-          <input value={novaCategoria} onChange={(e) => setNovaCategoria(e.target.value)} className="w-full bg-black border border-gray-700 rounded p-2 text-white" placeholder="Categoria (ex: ALIMENTACAO)" />
+          <select
+            value={novaCategoria}
+            onChange={(e) => setNovaCategoria(e.target.value)}
+            className="w-full bg-black border border-gray-700 rounded p-2 text-white"
+          >
+            <option value="">Selecione uma categoria</option>
+            {categorias.map((cat) => (
+              <option key={cat} value={cat}>{cat}</option>
+            ))}
+          </select>
           <input type="number" value={novoLimite} onChange={(e) => setNovoLimite(e.target.value)} className="w-full bg-black border border-gray-700 rounded p-2 text-white" placeholder="Limite mensal (ex: 500)" />
           <button onClick={adicionarMeta} className="w-full bg-white text-black py-2 rounded-lg font-medium">Adicionar Meta</button>
         </div>

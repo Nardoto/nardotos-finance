@@ -14,13 +14,14 @@ export async function POST(request: NextRequest) {
 
     const usuarioUpper = usuario.toUpperCase();
 
-    // Verificar credenciais
-    let senhaCorreta = '';
-    if (usuarioUpper === 'THARCISIO') {
-      senhaCorreta = process.env.USER_THARCISIO_PASSWORD || 'tharcisio123';
-    } else if (usuarioUpper === 'TAMIRES') {
-      senhaCorreta = process.env.USER_TAMIRES_PASSWORD || 'tamires123';
-    } else {
+    // Verificar credenciais (senhas fixas para app pessoal)
+    const senhas: Record<string, string> = {
+      'THARCISIO': 'tharcisio123',
+      'TAMIRES': 'tamires123'
+    };
+
+    const senhaCorreta = senhas[usuarioUpper];
+    if (!senhaCorreta) {
       return NextResponse.json(
         { error: 'Usuário não encontrado' },
         { status: 401 }
