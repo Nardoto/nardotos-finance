@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, query, orderBy, limit, where, Timestamp } from 'firebase/firestore';
+import { getAdminDb } from '@/lib/firebase-admin';
+import { Timestamp } from 'firebase-admin/firestore';
 
 // GET - Listar lançamentos
 export async function GET(request: NextRequest) {
   try {
+    const db = getAdminDb();
     const searchParams = request.nextUrl.searchParams;
     const limitCount = parseInt(searchParams.get('limit') || '50');
     const mes = searchParams.get('mes'); // formato: 2025-01
 
-    const lancamentosRef = collection(db, 'lancamentos');
+    const lancamentosRef = db.collection('lancamentos');
     let q;
 
     if (mes) {
@@ -17,31 +18,31 @@ export async function GET(request: NextRequest) {
       const inicio = new Date(ano, mesNum - 1, 1);
       const fim = new Date(ano, mesNum, 0, 23, 59, 59);
 
-      q = query(
-        lancamentosRef,
-        where('data', '>=', Timestamp.fromDate(inicio)),
-        where('data', '<=', Timestamp.fromDate(fim)),
-        orderBy('data', 'desc'),
-        limit(limitCount)
-      );
+      q = lancamentosRef
+        .where('data', '>=', Timestamp.fromDate(inicio))
+        .where('data', '<=', Timestamp.fromDate(fim))
+        .orderBy('data', 'desc')
+        .limit(limitCount);
     } else {
-      // Usando limit simples para evitar necessidade de índice
-      q = query(lancamentosRef, limit(limitCount));
+      q = lancamentosRef.limit(limitCount);
     }
 
-    const snapshot = await getDocs(q);
-    const lancamentos = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      data: doc.data().data?.toDate?.() || doc.data().data,
-      criadoEm: doc.data().criadoEm?.toDate?.() || doc.data().criadoEm
-    }));
+    const snapshot = await q.get();
+    const lancamentos = snapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        data: data.data?.toDate?.() || data.data,
+        criadoEm: data.criadoEm?.toDate?.() || data.criadoEm
+      };
+    });
 
     return NextResponse.json({ lancamentos });
   } catch (error) {
     console.error('Erro ao buscar lançamentos:', error);
     return NextResponse.json(
-      { error: 'Erro ao buscar lançamentos' },
+      { error: 'Erro ao buscar lançamentos', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }
@@ -50,6 +51,7 @@ export async function GET(request: NextRequest) {
 // POST - Criar lançamento
 export async function POST(request: NextRequest) {
   try {
+    const db = getAdminDb();
     const body = await request.json();
     const { lancamentos, usuario } = body;
 
@@ -67,19 +69,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const lancamentosRef = collection(db, 'lancamentos');
-    const categoriasRef = collection(db, 'categorias');
+    const lancamentosRef = db.collection('lancamentos');
+    const categoriasRef = db.collection('categorias');
     const salvos = [];
 
     for (const lancamento of lancamentos) {
       // Verificar/criar categoria
-      const categoriasSnapshot = await getDocs(categoriasRef);
-      const categoriaExiste = categoriasSnapshot.docs.some(
-        doc => doc.data().nome === lancamento.categoria
-      );
+      const categoriasSnapshot = await categoriasRef.where('nome', '==', lancamento.categoria).get();
 
-      if (!categoriaExiste) {
-        await addDoc(categoriasRef, {
+      if (categoriasSnapshot.empty) {
+        await categoriasRef.add({
           nome: lancamento.categoria,
           tipo: lancamento.tipo,
           criadaEm: Timestamp.now()
@@ -87,7 +86,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Salvar lançamento
-      const docRef = await addDoc(lancamentosRef, {
+      const docRef = await lancamentosRef.add({
         tipo: lancamento.tipo,
         valor: lancamento.valor,
         categoria: lancamento.categoria,
@@ -105,7 +104,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Erro ao salvar lançamentos:', error);
     return NextResponse.json(
-      { error: 'Erro ao salvar lançamentos' },
+      { error: 'Erro ao salvar lançamentos', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }

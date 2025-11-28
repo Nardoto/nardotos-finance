@@ -1,39 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebase';
-import { collection, getDocs, query, where, Timestamp } from 'firebase/firestore';
+import { getAdminDb } from '@/lib/firebase-admin';
+import { Timestamp } from 'firebase-admin/firestore';
 
 export async function GET(request: NextRequest) {
   try {
+    const db = getAdminDb();
     const searchParams = request.nextUrl.searchParams;
     const mes = searchParams.get('mes'); // formato: 2025-01
 
-    const lancamentosRef = collection(db, 'lancamentos');
-    let lancamentosQuery;
+    const lancamentosRef = db.collection('lancamentos');
+    let inicio: Date, fim: Date;
 
     if (mes) {
       const [ano, mesNum] = mes.split('-').map(Number);
-      const inicio = new Date(ano, mesNum - 1, 1);
-      const fim = new Date(ano, mesNum, 0, 23, 59, 59);
-
-      lancamentosQuery = query(
-        lancamentosRef,
-        where('data', '>=', Timestamp.fromDate(inicio)),
-        where('data', '<=', Timestamp.fromDate(fim))
-      );
+      inicio = new Date(ano, mesNum - 1, 1);
+      fim = new Date(ano, mesNum, 0, 23, 59, 59);
     } else {
       // Mês atual
       const agora = new Date();
-      const inicio = new Date(agora.getFullYear(), agora.getMonth(), 1);
-      const fim = new Date(agora.getFullYear(), agora.getMonth() + 1, 0, 23, 59, 59);
-
-      lancamentosQuery = query(
-        lancamentosRef,
-        where('data', '>=', Timestamp.fromDate(inicio)),
-        where('data', '<=', Timestamp.fromDate(fim))
-      );
+      inicio = new Date(agora.getFullYear(), agora.getMonth(), 1);
+      fim = new Date(agora.getFullYear(), agora.getMonth() + 1, 0, 23, 59, 59);
     }
 
-    const snapshot = await getDocs(lancamentosQuery);
+    const snapshot = await lancamentosRef
+      .where('data', '>=', Timestamp.fromDate(inicio))
+      .where('data', '<=', Timestamp.fromDate(fim))
+      .get();
 
     let totalReceitas = 0;
     let totalDespesas = 0;
@@ -48,7 +40,6 @@ export async function GET(request: NextRequest) {
       if (data.tipo === 'RECEITA') {
         if (data.status === 'OK') {
           totalReceitas += valor;
-          // Agrupar receitas por categoria
           receitasPorCategoria[data.categoria] = (receitasPorCategoria[data.categoria] || 0) + valor;
         } else {
           totalPendente += valor;
@@ -61,19 +52,16 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      // Agrupar por categoria (apenas despesas OK)
       if (data.tipo === 'DESPESA' && data.status === 'OK') {
         porCategoria[data.categoria] = (porCategoria[data.categoria] || 0) + valor;
       }
     });
 
-    // Ordenar categorias de despesas por valor
     const categoriasOrdenadas = Object.entries(porCategoria)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 10)
       .map(([categoria, valor]) => ({ categoria, valor }));
 
-    // Ordenar categorias de receitas por valor
     const receitasOrdenadas = Object.entries(receitasPorCategoria)
       .sort((a, b) => b[1] - a[1])
       .map(([categoria, valor]) => ({ categoria, valor }));
@@ -90,7 +78,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Erro ao buscar resumo:', error);
     return NextResponse.json(
-      { error: 'Erro ao buscar resumo' },
+      { error: 'Erro ao buscar resumo', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }

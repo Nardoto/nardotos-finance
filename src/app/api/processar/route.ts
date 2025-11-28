@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { processarTexto, processarImagem } from '@/lib/gemini';
-import { db } from '@/lib/firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import { getAdminDb } from '@/lib/firebase-admin';
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,8 +15,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Buscar categorias existentes
-    const categoriasRef = collection(db, 'categorias');
-    const categoriasSnapshot = await getDocs(categoriasRef);
+    const db = getAdminDb();
+    const categoriasSnapshot = await db.collection('categorias').get();
     const categoriasExistentes = categoriasSnapshot.docs.map(doc => doc.data().nome);
 
     let lancamentos;
@@ -32,7 +31,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Erro ao processar:', error);
     return NextResponse.json(
-      { error: 'Erro ao processar lançamento' },
+      { error: 'Erro ao processar lançamento', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }

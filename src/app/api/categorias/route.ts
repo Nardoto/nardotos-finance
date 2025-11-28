@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import { getAdminDb } from '@/lib/firebase-admin';
 
 // GET - Listar categorias existentes (extraidas dos lancamentos)
 export async function GET() {
   try {
-    const lancamentosRef = collection(db, 'lancamentos');
-    const snapshot = await getDocs(lancamentosRef);
+    const db = getAdminDb();
+    const lancamentosRef = db.collection('lancamentos');
+    const snapshot = await lancamentosRef.get();
 
     const categoriasSet = new Set<string>();
 
@@ -38,6 +38,9 @@ export async function GET() {
     return NextResponse.json({ categorias });
   } catch (error) {
     console.error('Erro ao buscar categorias:', error);
-    return NextResponse.json({ error: 'Erro ao buscar categorias' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Erro ao buscar categorias', details: error instanceof Error ? error.message : String(error) },
+      { status: 500 }
+    );
   }
 }
