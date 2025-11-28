@@ -1,65 +1,305 @@
-import Image from "next/image";
+'use client';
+
+import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+
+interface Lancamento {
+  id?: string;
+  tipo: 'RECEITA' | 'DESPESA';
+  valor: number;
+  categoria: string;
+  descricao: string;
+  data: string | Date;
+  status: 'OK' | 'PENDENTE';
+  usuario?: string;
+}
+
+interface Resumo {
+  totalReceitas: number;
+  totalDespesas: number;
+  saldo: number;
+}
 
 export default function Home() {
+  const [usuario, setUsuario] = useState<string | null>(null);
+  const [texto, setTexto] = useState('');
+  const [processando, setProcessando] = useState(false);
+  const [lancamentosRecentes, setLancamentosRecentes] = useState<Lancamento[]>([]);
+  const [lancamentosFiltrados, setLancamentosFiltrados] = useState<Lancamento[]>([]);
+  const [resumo, setResumo] = useState<Resumo | null>(null);
+  const [erro, setErro] = useState('');
+  const [sucesso, setSucesso] = useState('');
+  const [editando, setEditando] = useState<string | null>(null);
+  const [lancamentoEdit, setLancamentoEdit] = useState<Lancamento | null>(null);
+  const [filtro, setFiltro] = useState('');
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    const usuarioSalvo = localStorage.getItem('usuario');
+    if (!usuarioSalvo) {
+      router.push('/login');
+    } else {
+      setUsuario(usuarioSalvo);
+      carregarDados();
+    }
+    // Registrar Service Worker para PWA
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js');
+    }
+  }, [router]);
+
+  useEffect(() => {
+    if (filtro) {
+      const termo = filtro.toLowerCase();
+      setLancamentosFiltrados(lancamentosRecentes.filter(l =>
+        l.categoria.toLowerCase().includes(termo) ||
+        l.descricao?.toLowerCase().includes(termo) ||
+        l.valor.toString().includes(termo)
+      ));
+    } else {
+      setLancamentosFiltrados(lancamentosRecentes);
+    }
+  }, [filtro, lancamentosRecentes]);
+
+  const carregarDados = async () => {
+    try {
+      const resLancamentos = await fetch('/api/lancamentos?limit=20');
+      const dataLancamentos = await resLancamentos.json();
+      setLancamentosRecentes(dataLancamentos.lancamentos || []);
+      const resResumo = await fetch('/api/resumo');
+      const dataResumo = await resResumo.json();
+      setResumo(dataResumo);
+    } catch (error) {
+      console.error('Erro ao carregar dados:', error);
+    }
+  };
+
+  const enviarLancamento = async () => {
+    if (!texto.trim()) return;
+    setProcessando(true);
+    setErro('');
+    try {
+      const resProcessar = await fetch('/api/processar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ texto }),
+      });
+      const dataProcessar = await resProcessar.json();
+
+      if (dataProcessar.error) {
+        setErro(dataProcessar.error);
+        return;
+      }
+
+      const resSalvar = await fetch('/api/lancamentos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lancamentos: dataProcessar.lancamentos, usuario }),
+      });
+      const dataSalvar = await resSalvar.json();
+
+      if (dataSalvar.error) {
+        setErro(dataSalvar.error);
+      } else {
+        setSucesso('Salvo!');
+        setTexto('');
+        carregarDados();
+        setTimeout(() => setSucesso(''), 2000);
+      }
+    } catch (error) {
+      setErro('Erro ao processar.');
+      console.error(error);
+    } finally {
+      setProcessando(false);
+    }
+  };
+
+  const processarImagem = async (file: File) => {
+    setProcessando(true);
+    setErro('');
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const base64 = e.target?.result as string;
+      try {
+        const resProcessar = await fetch('/api/processar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imagemBase64: base64 }),
+        });
+        const dataProcessar = await resProcessar.json();
+
+        if (dataProcessar.error) {
+          setErro(dataProcessar.error);
+          return;
+        }
+
+        const resSalvar = await fetch('/api/lancamentos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ lancamentos: dataProcessar.lancamentos, usuario }),
+        });
+        const dataSalvar = await resSalvar.json();
+
+        if (dataSalvar.error) {
+          setErro(dataSalvar.error);
+        } else {
+          setSucesso(dataSalvar.salvos.length + ' lancamento(s) salvo(s)!');
+          carregarDados();
+          setTimeout(() => setSucesso(''), 3000);
+        }
+      } catch { setErro('Erro ao processar imagem.'); }
+      setProcessando(false);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const excluirLancamento = async (id: string) => {
+    try {
+      const res = await fetch(`/api/lancamentos/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setConfirmDelete(null);
+        carregarDados();
+        setSucesso('Excluido!');
+        setTimeout(() => setSucesso(''), 2000);
+      }
+    } catch { setErro('Erro ao excluir.'); }
+  };
+
+  const iniciarEdicao = (l: Lancamento) => {
+    setEditando(l.id || null);
+    setLancamentoEdit({ ...l });
+  };
+
+  const salvarEdicao = async () => {
+    if (!lancamentoEdit || !editando) return;
+    try {
+      const res = await fetch(`/api/lancamentos/${editando}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(lancamentoEdit),
+      });
+      if (res.ok) {
+        setEditando(null);
+        setLancamentoEdit(null);
+        carregarDados();
+        setSucesso('Atualizado!');
+        setTimeout(() => setSucesso(''), 2000);
+      }
+    } catch { setErro('Erro ao atualizar.'); }
+  };
+
+  const formatarValor = (valor: number) => valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const formatarData = (data: string | Date) => new Date(data).toLocaleDateString('pt-BR');
+  const logout = () => { localStorage.removeItem('usuario'); router.push('/login'); };
+
+  if (!usuario) return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div></div>;
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <main className="min-h-screen p-4 max-w-2xl mx-auto pb-20">
+      <header className="flex justify-between items-center mb-6">
+        <div><h1 className="text-xl font-bold text-white">Nardotos Finance</h1><p className="text-gray-500 text-sm">{usuario}</p></div>
+        <button onClick={logout} className="text-gray-500 hover:text-white text-sm">Sair</button>
+      </header>
+
+      {/* Navegacao */}
+      <div className="flex gap-2 mb-6 text-sm">
+        <button className="flex-1 bg-white text-black py-2 px-3 rounded-lg font-medium">Lancamentos</button>
+        <button onClick={() => router.push('/dashboard')} className="flex-1 border border-gray-700 text-white py-2 px-3 rounded-lg">Dashboard</button>
+        <button onClick={() => router.push('/planejamento')} className="flex-1 border border-gray-700 text-white py-2 px-3 rounded-lg">Planejamento</button>
+        <button onClick={() => router.push('/metas')} className="flex-1 border border-gray-700 text-white py-2 px-3 rounded-lg">Metas</button>
+      </div>
+
+      {resumo && (
+        <div className="grid grid-cols-3 gap-3 mb-6">
+          <div className="border border-gray-800 rounded-lg p-3 text-center"><p className="text-xs text-gray-500">Receitas</p><p className="text-lg font-bold text-green-500">{formatarValor(resumo.totalReceitas)}</p></div>
+          <div className="border border-gray-800 rounded-lg p-3 text-center"><p className="text-xs text-gray-500">Despesas</p><p className="text-lg font-bold text-red-500">{formatarValor(resumo.totalDespesas)}</p></div>
+          <div className="border border-gray-800 rounded-lg p-3 text-center"><p className="text-xs text-gray-500">Saldo</p><p className={"text-lg font-bold " + (resumo.saldo >= 0 ? 'text-green-500' : 'text-red-500')}>{formatarValor(resumo.saldo)}</p></div>
+        </div>
+      )}
+
+      <div className="border border-gray-800 rounded-lg p-4 mb-6">
+        <textarea value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Ex: Gastei 45 no mercado" className="w-full bg-black border border-gray-800 rounded-lg p-3 text-white placeholder-gray-600 resize-none focus:outline-none focus:border-white" rows={2} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviarLancamento(); } }} />
+        <div className="flex gap-2 mt-3">
+          <button onClick={enviarLancamento} disabled={processando || !texto.trim()} className="flex-1 bg-white hover:bg-gray-200 disabled:bg-gray-800 disabled:text-gray-500 text-black font-medium py-2 px-4 rounded-lg transition">{processando ? 'Salvando...' : 'Enviar'}</button>
+          <button onClick={() => fileInputRef.current?.click()} disabled={processando} className="border border-gray-700 hover:border-white disabled:border-gray-800 disabled:text-gray-500 text-white font-medium py-2 px-4 rounded-lg transition">Extrato</button>
+          <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) processarImagem(file); }} />
+        </div>
+      </div>
+
+      {erro && <div className="border border-red-800 text-red-400 rounded-lg p-3 mb-4">{erro}</div>}
+      {sucesso && <div className="border border-green-800 text-green-400 rounded-lg p-3 mb-4">{sucesso}</div>}
+
+      {/* Filtro */}
+      <div className="mb-4">
+        <input
+          value={filtro}
+          onChange={(e) => setFiltro(e.target.value)}
+          placeholder="Buscar por categoria, descricao ou valor..."
+          className="w-full bg-black border border-gray-800 rounded-lg p-3 text-white placeholder-gray-600 focus:outline-none focus:border-white"
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+      </div>
+
+      {/* Modal de confirmacao */}
+      {confirmDelete && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900 border border-gray-700 rounded-lg p-6 max-w-sm w-full">
+            <p className="text-white mb-4">Tem certeza que deseja excluir este lancamento?</p>
+            <div className="flex gap-2">
+              <button onClick={() => excluirLancamento(confirmDelete)} className="flex-1 bg-red-600 text-white py-2 rounded-lg">Excluir</button>
+              <button onClick={() => setConfirmDelete(null)} className="flex-1 border border-gray-700 text-white py-2 rounded-lg">Cancelar</button>
+            </div>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+      )}
+
+      <div>
+        <h3 className="text-gray-500 font-medium mb-3">Lancamentos ({lancamentosFiltrados.length})</h3>
+        {lancamentosFiltrados.length === 0 ? <p className="text-gray-600 text-center py-8">Nenhum lancamento encontrado</p> : (
+          <div className="space-y-2">
+            {lancamentosFiltrados.map((l) => (
+              <div key={l.id} className="border border-gray-800 rounded-lg p-3">
+                {editando === l.id ? (
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <select value={lancamentoEdit?.tipo} onChange={(e) => setLancamentoEdit(prev => prev ? {...prev, tipo: e.target.value as 'RECEITA' | 'DESPESA'} : null)} className="bg-black border border-gray-700 rounded p-2 text-white">
+                        <option value="DESPESA">Despesa</option>
+                        <option value="RECEITA">Receita</option>
+                      </select>
+                      <input type="number" value={lancamentoEdit?.valor} onChange={(e) => setLancamentoEdit(prev => prev ? {...prev, valor: Number(e.target.value)} : null)} className="flex-1 bg-black border border-gray-700 rounded p-2 text-white" />
+                    </div>
+                    <input value={lancamentoEdit?.categoria} onChange={(e) => setLancamentoEdit(prev => prev ? {...prev, categoria: e.target.value.toUpperCase()} : null)} className="w-full bg-black border border-gray-700 rounded p-2 text-white" placeholder="Categoria" />
+                    <input value={lancamentoEdit?.descricao} onChange={(e) => setLancamentoEdit(prev => prev ? {...prev, descricao: e.target.value} : null)} className="w-full bg-black border border-gray-700 rounded p-2 text-white" placeholder="Descricao" />
+                    <div className="flex gap-2">
+                      <button onClick={salvarEdicao} className="flex-1 bg-white text-black py-2 rounded">Salvar</button>
+                      <button onClick={() => { setEditando(null); setLancamentoEdit(null); }} className="flex-1 border border-gray-700 text-white py-2 rounded">Cancelar</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className={"font-medium " + (l.tipo === 'RECEITA' ? 'text-green-500' : 'text-red-500')}>{l.tipo === 'RECEITA' ? '+' : '-'}{formatarValor(l.valor)}</p>
+                      <p className="text-sm text-gray-500">{l.categoria}</p>
+                      {l.descricao && <p className="text-xs text-gray-600">{l.descricao}</p>}
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="text-right">
+                        <p className="text-xs text-gray-600">{formatarData(l.data)}</p>
+                        <p className="text-xs text-gray-600">{l.usuario}</p>
+                      </div>
+                      <div className="flex gap-1">
+                        <button onClick={() => iniciarEdicao(l)} className="text-gray-500 hover:text-white text-sm px-2">Editar</button>
+                        <button onClick={() => setConfirmDelete(l.id || null)} className="text-gray-500 hover:text-red-400 text-sm px-2">X</button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </main>
   );
 }
