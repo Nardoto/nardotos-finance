@@ -6,22 +6,32 @@ let adminDb: Firestore;
 
 function getAdminApp(): App {
   if (getApps().length === 0) {
-    // Para Vercel, usamos variáveis de ambiente separadas
-    const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-    const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+    const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT;
 
-    if (!projectId || !clientEmail || !privateKey) {
-      throw new Error('Firebase Admin credentials missing. Check FIREBASE_CLIENT_EMAIL and FIREBASE_PRIVATE_KEY');
+    if (serviceAccountJson) {
+      // Usar JSON completo da service account
+      const serviceAccount = JSON.parse(serviceAccountJson);
+      app = initializeApp({
+        credential: cert(serviceAccount),
+      });
+    } else {
+      // Fallback para variáveis separadas
+      const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+      const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+      const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+
+      if (!projectId || !clientEmail || !privateKey) {
+        throw new Error('Firebase Admin credentials missing');
+      }
+
+      app = initializeApp({
+        credential: cert({
+          projectId,
+          clientEmail,
+          privateKey,
+        }),
+      });
     }
-
-    app = initializeApp({
-      credential: cert({
-        projectId,
-        clientEmail,
-        privateKey,
-      }),
-    });
   } else {
     app = getApps()[0];
   }
