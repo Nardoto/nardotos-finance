@@ -39,6 +39,7 @@ export async function GET(request: NextRequest) {
     let totalDespesas = 0;
     let totalPendente = 0;
     const porCategoria: Record<string, number> = {};
+    const receitasPorCategoria: Record<string, number> = {};
 
     snapshot.docs.forEach(doc => {
       const data = doc.data();
@@ -47,6 +48,8 @@ export async function GET(request: NextRequest) {
       if (data.tipo === 'RECEITA') {
         if (data.status === 'OK') {
           totalReceitas += valor;
+          // Agrupar receitas por categoria
+          receitasPorCategoria[data.categoria] = (receitasPorCategoria[data.categoria] || 0) + valor;
         } else {
           totalPendente += valor;
         }
@@ -64,10 +67,15 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    // Ordenar categorias por valor
+    // Ordenar categorias de despesas por valor
     const categoriasOrdenadas = Object.entries(porCategoria)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 10)
+      .map(([categoria, valor]) => ({ categoria, valor }));
+
+    // Ordenar categorias de receitas por valor
+    const receitasOrdenadas = Object.entries(receitasPorCategoria)
+      .sort((a, b) => b[1] - a[1])
       .map(([categoria, valor]) => ({ categoria, valor }));
 
     return NextResponse.json({
@@ -76,7 +84,8 @@ export async function GET(request: NextRequest) {
       saldo: totalReceitas - totalDespesas,
       totalPendente,
       totalLancamentos: snapshot.size,
-      porCategoria: categoriasOrdenadas
+      porCategoria: categoriasOrdenadas,
+      receitasPorCategoria: receitasOrdenadas
     });
   } catch (error) {
     console.error('Erro ao buscar resumo:', error);

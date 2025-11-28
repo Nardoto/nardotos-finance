@@ -28,6 +28,7 @@ export async function POST(request: NextRequest) {
 
     const metasRef = collection(db, 'metas');
     const docRef = await addDoc(metasRef, {
+      tipo: body.tipo || 'DESPESA',
       categoria: body.categoria,
       limite: body.limite,
       mes: body.mes,

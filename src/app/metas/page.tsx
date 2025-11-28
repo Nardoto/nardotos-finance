@@ -5,13 +5,15 @@ import { useRouter } from 'next/navigation';
 
 interface Meta {
   id?: string;
+  tipo: 'RECEITA' | 'DESPESA';
   categoria: string;
   limite: number;
   mes: string;
 }
 
-interface GastoCategoria {
+interface ProgressoMeta {
   categoria: string;
+  tipo: 'RECEITA' | 'DESPESA';
   total: number;
   limite: number;
   percentual: number;
@@ -20,8 +22,10 @@ interface GastoCategoria {
 export default function Metas() {
   const [usuario, setUsuario] = useState<string | null>(null);
   const [metas, setMetas] = useState<Meta[]>([]);
-  const [gastos, setGastos] = useState<GastoCategoria[]>([]);
+  const [progressoDespesas, setProgressoDespesas] = useState<ProgressoMeta[]>([]);
+  const [progressoReceitas, setProgressoReceitas] = useState<ProgressoMeta[]>([]);
   const [categorias, setCategorias] = useState<string[]>([]);
+  const [novoTipo, setNovoTipo] = useState<'RECEITA' | 'DESPESA'>('DESPESA');
   const [novaCategoria, setNovaCategoria] = useState('');
   const [novoLimite, setNovoLimite] = useState('');
   const [erro, setErro] = useState('');
@@ -53,20 +57,40 @@ export default function Metas() {
       const dataResumo = await resResumo.json();
       const dataCategorias = await resCategorias.json();
 
-      setMetas(dataMetas.metas || []);
+      const todasMetas = dataMetas.metas || [];
+      setMetas(todasMetas);
       setCategorias(dataCategorias.categorias || []);
 
-      // Calcular gastos por categoria com metas
-      const gastosComMetas = (dataResumo.porCategoria || []).map((g: { categoria: string; valor: number }) => {
-        const meta = (dataMetas.metas || []).find((m: Meta) => m.categoria === g.categoria);
+      // Calcular progresso de despesas
+      const metasDespesas = todasMetas.filter((m: Meta) => m.tipo !== 'RECEITA');
+      const despesasProgresso = (dataResumo.porCategoria || []).map((g: { categoria: string; valor: number }) => {
+        const meta = metasDespesas.find((m: Meta) => m.categoria === g.categoria);
         return {
           categoria: g.categoria,
+          tipo: 'DESPESA' as const,
           total: g.valor,
           limite: meta?.limite || 0,
           percentual: meta?.limite ? (g.valor / meta.limite) * 100 : 0
         };
+      }).filter((p: ProgressoMeta) => p.limite > 0);
+      setProgressoDespesas(despesasProgresso);
+
+      // Calcular progresso de receitas
+      const metasReceitas = todasMetas.filter((m: Meta) => m.tipo === 'RECEITA');
+      const receitasProgresso = metasReceitas.map((m: Meta) => {
+        const receitaCategoria = (dataResumo.receitasPorCategoria || []).find(
+          (r: { categoria: string; valor: number }) => r.categoria === m.categoria
+        );
+        const total = receitaCategoria?.valor || 0;
+        return {
+          categoria: m.categoria,
+          tipo: 'RECEITA' as const,
+          total,
+          limite: m.limite,
+          percentual: m.limite ? (total / m.limite) * 100 : 0
+        };
       });
-      setGastos(gastosComMetas);
+      setProgressoReceitas(receitasProgresso);
     } catch (error) {
       console.error('Erro ao carregar:', error);
     }
@@ -74,7 +98,7 @@ export default function Metas() {
 
   const adicionarMeta = async () => {
     if (!novaCategoria || !novoLimite) {
-      setErro('Selecione uma categoria e preencha o limite');
+      setErro('Selecione uma categoria e preencha o valor');
       return;
     }
 
@@ -83,6 +107,7 @@ export default function Metas() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          tipo: novoTipo,
           categoria: novaCategoria,
           limite: Number(novoLimite),
           mes: mesAtual
@@ -127,8 +152,22 @@ export default function Metas() {
 
       {/* Adicionar Meta */}
       <div className="border border-gray-800 rounded-lg p-4 mb-6">
-        <h3 className="text-gray-500 font-medium mb-3">Nova meta de gasto</h3>
+        <h3 className="text-gray-500 font-medium mb-3">Nova meta</h3>
         <div className="space-y-2">
+          <div className="flex gap-2">
+            <button
+              onClick={() => setNovoTipo('DESPESA')}
+              className={`flex-1 py-2 rounded-lg transition ${novoTipo === 'DESPESA' ? 'bg-red-600 text-white' : 'border border-gray-700 text-gray-400'}`}
+            >
+              Limite gasto
+            </button>
+            <button
+              onClick={() => setNovoTipo('RECEITA')}
+              className={`flex-1 py-2 rounded-lg transition ${novoTipo === 'RECEITA' ? 'bg-green-600 text-white' : 'border border-gray-700 text-gray-400'}`}
+            >
+              Meta receita
+            </button>
+          </div>
           <select
             value={novaCategoria}
             onChange={(e) => setNovaCategoria(e.target.value)}
@@ -139,7 +178,13 @@ export default function Metas() {
               <option key={cat} value={cat}>{cat}</option>
             ))}
           </select>
-          <input type="number" value={novoLimite} onChange={(e) => setNovoLimite(e.target.value)} className="w-full bg-black border border-gray-700 rounded p-2 text-white" placeholder="Limite mensal (ex: 500)" />
+          <input
+            type="number"
+            value={novoLimite}
+            onChange={(e) => setNovoLimite(e.target.value)}
+            className="w-full bg-black border border-gray-700 rounded p-2 text-white"
+            placeholder={novoTipo === 'RECEITA' ? 'Meta de faturamento (ex: 5000)' : 'Limite de gasto (ex: 500)'}
+          />
           <button onClick={adicionarMeta} className="w-full bg-white text-black py-2 rounded-lg font-medium">Adicionar Meta</button>
         </div>
       </div>
@@ -147,31 +192,61 @@ export default function Metas() {
       {erro && <div className="border border-red-800 text-red-400 rounded-lg p-3 mb-4">{erro}</div>}
       {sucesso && <div className="border border-green-800 text-green-400 rounded-lg p-3 mb-4">{sucesso}</div>}
 
-      {/* Progresso das Metas */}
-      <div className="mb-6">
-        <h3 className="text-gray-500 font-medium mb-3">Progresso do mes</h3>
-        {gastos.length === 0 ? <p className="text-gray-600 text-center py-4">Nenhum gasto com meta definida</p> : (
+      {/* Progresso de Receitas */}
+      {progressoReceitas.length > 0 && (
+        <div className="mb-6">
+          <h3 className="text-gray-500 font-medium mb-3">Metas de faturamento</h3>
           <div className="space-y-3">
-            {gastos.filter(g => g.limite > 0).map((g, i) => (
+            {progressoReceitas.map((p, i) => (
               <div key={i} className="border border-gray-800 rounded-lg p-3">
                 <div className="flex justify-between mb-2">
-                  <span className="text-white">{g.categoria}</span>
-                  <span className={g.percentual > 100 ? 'text-red-500' : g.percentual > 80 ? 'text-yellow-500' : 'text-green-500'}>
-                    {formatarValor(g.total)} / {formatarValor(g.limite)}
+                  <span className="text-white">{p.categoria}</span>
+                  <span className={p.percentual >= 100 ? 'text-green-500' : p.percentual >= 50 ? 'text-yellow-500' : 'text-red-500'}>
+                    {formatarValor(p.total)} / {formatarValor(p.limite)}
                   </span>
                 </div>
                 <div className="w-full bg-gray-800 rounded-full h-3">
                   <div
-                    className={`h-3 rounded-full transition-all ${g.percentual > 100 ? 'bg-red-500' : g.percentual > 80 ? 'bg-yellow-500' : 'bg-green-500'}`}
-                    style={{ width: `${Math.min(g.percentual, 100)}%` }}
+                    className={`h-3 rounded-full transition-all ${p.percentual >= 100 ? 'bg-green-500' : p.percentual >= 50 ? 'bg-yellow-500' : 'bg-red-500'}`}
+                    style={{ width: `${Math.min(p.percentual, 100)}%` }}
                   />
                 </div>
-                <p className="text-xs text-gray-500 mt-1">{g.percentual.toFixed(0)}% usado</p>
+                <p className="text-xs text-gray-500 mt-1">{p.percentual.toFixed(0)}% alcancado</p>
               </div>
             ))}
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      {/* Progresso de Despesas */}
+      {progressoDespesas.length > 0 && (
+        <div className="mb-6">
+          <h3 className="text-gray-500 font-medium mb-3">Limites de gasto</h3>
+          <div className="space-y-3">
+            {progressoDespesas.map((p, i) => (
+              <div key={i} className="border border-gray-800 rounded-lg p-3">
+                <div className="flex justify-between mb-2">
+                  <span className="text-white">{p.categoria}</span>
+                  <span className={p.percentual > 100 ? 'text-red-500' : p.percentual > 80 ? 'text-yellow-500' : 'text-green-500'}>
+                    {formatarValor(p.total)} / {formatarValor(p.limite)}
+                  </span>
+                </div>
+                <div className="w-full bg-gray-800 rounded-full h-3">
+                  <div
+                    className={`h-3 rounded-full transition-all ${p.percentual > 100 ? 'bg-red-500' : p.percentual > 80 ? 'bg-yellow-500' : 'bg-green-500'}`}
+                    style={{ width: `${Math.min(p.percentual, 100)}%` }}
+                  />
+                </div>
+                <p className="text-xs text-gray-500 mt-1">{p.percentual.toFixed(0)}% usado</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {progressoDespesas.length === 0 && progressoReceitas.length === 0 && (
+        <p className="text-gray-600 text-center py-4 mb-6">Nenhuma meta com progresso ainda</p>
+      )}
 
       {/* Lista de Metas */}
       <div>
@@ -181,8 +256,13 @@ export default function Metas() {
             {metas.map((m) => (
               <div key={m.id} className="flex items-center justify-between border border-gray-800 rounded-lg p-3">
                 <div>
-                  <p className="text-white">{m.categoria}</p>
-                  <p className="text-sm text-gray-500">Limite: {formatarValor(m.limite)}</p>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-xs px-2 py-0.5 rounded ${m.tipo === 'RECEITA' ? 'bg-green-900 text-green-400' : 'bg-red-900 text-red-400'}`}>
+                      {m.tipo === 'RECEITA' ? 'Meta' : 'Limite'}
+                    </span>
+                    <p className="text-white">{m.categoria}</p>
+                  </div>
+                  <p className="text-sm text-gray-500">{formatarValor(m.limite)}</p>
                 </div>
                 <button onClick={() => m.id && excluirMeta(m.id)} className="text-gray-500 hover:text-red-400">X</button>
               </div>
