@@ -276,12 +276,20 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Navegacao */}
-      <div className="flex gap-2 mb-6 text-sm">
-        <button className="flex-1 bg-blue-600 text-white py-2 px-3 rounded-lg font-medium">Lancamentos</button>
-        <button onClick={() => router.push('/dashboard')} className="flex-1 border border-gray-700 text-gray-400 hover:text-white py-2 px-3 rounded-lg">Dashboard</button>
-        <button onClick={() => router.push('/planejamento')} className="flex-1 border border-gray-700 text-gray-400 hover:text-white py-2 px-3 rounded-lg">Planejar</button>
-        <button onClick={() => router.push('/categorias')} className="flex-1 border border-gray-700 text-gray-400 hover:text-white py-2 px-3 rounded-lg">Categorias</button>
+      {/* Navegação com abas */}
+      <div className="flex border-b border-gray-200 dark:border-gray-700 mb-6">
+        <button className="px-4 py-2 text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400 font-medium">
+          Lançamentos
+        </button>
+        <button onClick={() => router.push('/dashboard')} className="px-4 py-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 border-b-2 border-transparent">
+          Dashboard
+        </button>
+        <button onClick={() => router.push('/planejamento')} className="px-4 py-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 border-b-2 border-transparent">
+          Planejar
+        </button>
+        <button onClick={() => router.push('/categorias')} className="px-4 py-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 border-b-2 border-transparent">
+          Categorias
+        </button>
       </div>
 
       {resumo && (
