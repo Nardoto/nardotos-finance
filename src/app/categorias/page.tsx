@@ -168,10 +168,10 @@ export default function Categorias() {
       </header>
 
       <div className="flex gap-2 mb-6 text-sm flex-wrap">
-        <button onClick={() => router.push('/')} className="flex-1 border border-gray-300 dark:border-gray-700 py-2 px-3 rounded-lg min-w-[70px]">Lancamentos</button>
-        <button onClick={() => router.push('/dashboard')} className="flex-1 border border-gray-300 dark:border-gray-700 py-2 px-3 rounded-lg min-w-[70px]">Dashboard</button>
-        <button onClick={() => router.push('/planejamento')} className="flex-1 border border-gray-300 dark:border-gray-700 py-2 px-3 rounded-lg min-w-[70px]">Planejar</button>
-        <button className="flex-1 bg-gray-900 dark:bg-white text-white dark:text-black py-2 px-3 rounded-lg font-medium min-w-[70px]">Categorias</button>
+        <button onClick={() => router.push('/')} className="flex-1 border border-gray-700 py-2 px-3 rounded-lg min-w-[70px]">Lancamentos</button>
+        <button onClick={() => router.push('/dashboard')} className="flex-1 border border-gray-700 py-2 px-3 rounded-lg min-w-[70px]">Dashboard</button>
+        <button onClick={() => router.push('/planejamento')} className="flex-1 border border-gray-700 py-2 px-3 rounded-lg min-w-[70px]">Planejar</button>
+        <button className="flex-1 bg-blue-600 text-white py-2 px-3 rounded-lg font-medium min-w-[70px]">Categorias</button>
       </div>
 
       <h2 className="font-bold text-lg mb-4">Gerenciar Categorias</h2>
@@ -198,14 +198,14 @@ export default function Categorias() {
       ) : (
         <div className="space-y-2">
           {categorias.map((cat) => (
-            <div key={cat.nome} className="border border-gray-300 dark:border-gray-800 rounded-lg p-3 bg-white dark:bg-transparent">
+            <div key={cat.nome} className="border border-gray-800 rounded-lg p-3 bg-gray-900">
               {editando === cat.nome ? (
                 <div className="flex gap-2 items-center">
                   <input
                     type="text"
                     value={novoNome}
                     onChange={(e) => setNovoNome(e.target.value)}
-                    className="flex-1 bg-white dark:bg-black border border-gray-300 dark:border-gray-700 rounded px-2 py-1"
+                    className="flex-1 bg-gray-800 border border-gray-700 rounded px-2 py-1"
                     placeholder="Novo nome"
                     autoFocus
                   />
@@ -229,7 +229,7 @@ export default function Categorias() {
                   <select
                     value={categoriaDestino}
                     onChange={(e) => setCategoriaDestino(e.target.value)}
-                    className="w-full bg-white dark:bg-black border border-gray-300 dark:border-gray-700 rounded px-2 py-1"
+                    className="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1"
                   >
                     <option value="">Selecione a categoria destino</option>
                     {categorias
@@ -287,7 +287,7 @@ export default function Categorias() {
         </div>
       )}
 
-      <div className="mt-6 p-4 border border-gray-300 dark:border-gray-800 rounded-lg bg-white dark:bg-transparent">
+      <div className="mt-6 p-4 border border-gray-800 rounded-lg bg-gray-900">
         <h3 className="text-gray-600 dark:text-gray-400 text-sm font-medium mb-2">Dicas:</h3>
         <ul className="text-gray-600 dark:text-gray-500 text-xs space-y-1">
           <li>• <strong>Renomear:</strong> Altera o nome da categoria em todos os lancamentos e planejamentos</li>

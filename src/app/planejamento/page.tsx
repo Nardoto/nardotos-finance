@@ -205,10 +205,10 @@ export default function Planejamento() {
       </header>
 
       <div className="flex gap-2 mb-6 text-sm flex-wrap">
-        <button onClick={() => router.push('/')} className="flex-1 border border-gray-300 dark:border-gray-700 py-2 px-3 rounded-lg min-w-[70px]">Lancamentos</button>
-        <button onClick={() => router.push('/dashboard')} className="flex-1 border border-gray-300 dark:border-gray-700 py-2 px-3 rounded-lg min-w-[70px]">Dashboard</button>
-        <button className="flex-1 bg-gray-900 dark:bg-white text-white dark:text-black py-2 px-3 rounded-lg font-medium min-w-[70px]">Planejar</button>
-        <button onClick={() => router.push('/categorias')} className="flex-1 border border-gray-300 dark:border-gray-700 py-2 px-3 rounded-lg min-w-[70px]">Categorias</button>
+        <button onClick={() => router.push('/')} className="flex-1 border border-gray-700 py-2 px-3 rounded-lg min-w-[70px]">Lancamentos</button>
+        <button onClick={() => router.push('/dashboard')} className="flex-1 border border-gray-700 py-2 px-3 rounded-lg min-w-[70px]">Dashboard</button>
+        <button className="flex-1 bg-blue-600 text-white py-2 px-3 rounded-lg font-medium min-w-[70px]">Planejar</button>
+        <button onClick={() => router.push('/categorias')} className="flex-1 border border-gray-700 py-2 px-3 rounded-lg min-w-[70px]">Categorias</button>
       </div>
 
       {/* Seletor de Mes */}
@@ -239,21 +239,21 @@ export default function Planejamento() {
       )}
 
       <div className="grid grid-cols-2 gap-3 mb-6">
-        <div className="border border-gray-300 dark:border-gray-800 rounded-lg p-3 text-center bg-white dark:bg-transparent">
+        <div className="border border-gray-800 rounded-lg p-3 text-center bg-gray-900">
           <p className="text-xs text-gray-500">A receber</p>
           <p className="text-lg font-bold text-green-600 dark:text-green-400">{formatarValor(totalReceitasMes)}</p>
         </div>
-        <div className="border border-gray-300 dark:border-gray-800 rounded-lg p-3 text-center bg-white dark:bg-transparent">
+        <div className="border border-gray-800 rounded-lg p-3 text-center bg-gray-900">
           <p className="text-xs text-gray-500">A pagar</p>
           <p className="text-lg font-bold text-red-600 dark:text-red-400">{formatarValor(totalDespesasMes)}</p>
         </div>
       </div>
-      <div className="border border-gray-300 dark:border-gray-800 rounded-lg p-3 text-center mb-6 bg-white dark:bg-transparent">
+      <div className="border border-gray-800 rounded-lg p-3 text-center mb-6 bg-gray-900">
         <p className="text-xs text-gray-500">Saldo previsto</p>
         <p className={`text-xl font-bold ${saldoPrevistoMes >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>{formatarValor(saldoPrevistoMes)}</p>
       </div>
 
-      <div className="border border-gray-300 dark:border-gray-800 rounded-lg p-4 mb-6 bg-white dark:bg-transparent">
+      <div className="border border-gray-800 rounded-lg p-4 mb-6 bg-gray-900">
         <textarea
           value={texto}
           onChange={(e) => setTexto(e.target.value)}
@@ -264,7 +264,7 @@ export default function Planejamento() {
         <button
           onClick={processarTexto}
           disabled={salvando || !texto.trim()}
-          className="w-full bg-gray-900 dark:bg-white text-white dark:text-black py-3 rounded-lg font-medium disabled:bg-gray-700 disabled:text-gray-500 mt-2"
+          className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium disabled:bg-gray-700 disabled:text-gray-500 mt-2"
         >
           {salvando ? 'Processando...' : 'Adicionar Planejamento'}
         </button>
@@ -278,7 +278,7 @@ export default function Planejamento() {
           <button
             key={f}
             onClick={() => setFiltro(f)}
-            className={`px-3 py-1 rounded-full ${filtro === f ? 'bg-gray-900 dark:bg-white text-white dark:text-black' : 'border border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-400'}`}
+            className={`px-3 py-1 rounded-full ${filtro === f ? 'bg-blue-600 text-white' : 'border border-gray-700 text-gray-600 dark:text-gray-400'}`}
           >
             {f === 'pendentes' && `Pendentes (${contasPendentesMes.length})`}
             {f === 'atrasadas' && `Atrasadas (${contasAtrasadasMes.length})`}
@@ -301,12 +301,12 @@ export default function Planejamento() {
                 key={c.id}
                 className={`border rounded-lg p-3 ${
                   c.paga
-                    ? 'border-gray-300 dark:border-gray-800 opacity-60 bg-white dark:bg-transparent'
+                    ? 'border-gray-800 opacity-60 bg-gray-900'
                     : atrasada
                     ? 'border-red-700 bg-red-100 dark:bg-red-900/20'
                     : proximaVencer
                     ? 'border-yellow-700 bg-yellow-100 dark:bg-yellow-900/20'
-                    : 'border-gray-300 dark:border-gray-800 bg-white dark:bg-transparent'
+                    : 'border-gray-800 bg-gray-900'
                 }`}
               >
                 <div className="flex items-center justify-between">
