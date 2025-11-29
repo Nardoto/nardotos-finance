@@ -22,9 +22,12 @@ export async function GET(request: NextRequest) {
         .where('data', '>=', Timestamp.fromDate(inicio))
         .where('data', '<=', Timestamp.fromDate(fim))
         .orderBy('data', 'desc')
+        .orderBy('criadoEm', 'desc')
         .limit(limitCount);
     } else {
-      q = lancamentosRef.limit(limitCount);
+      q = lancamentosRef
+        .orderBy('criadoEm', 'desc')
+        .limit(limitCount);
     }
 
     const snapshot = await q.get();

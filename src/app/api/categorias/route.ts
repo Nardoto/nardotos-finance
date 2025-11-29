@@ -21,11 +21,11 @@ export async function GET() {
     const categoriasPadrao = [
       'ALIMENTACAO',
       'TRANSPORTE',
-      'MORADIA',
+      'ALUGUEL',
       'SAUDE',
       'EDUCACAO',
       'LAZER',
-      'VESTUARIO',
+      'MERCADO',
       'SERVICOS',
       'OUTROS'
     ];

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import ThemeToggle from '@/components/ThemeToggle';
 
 interface Lancamento {
   id?: string;
@@ -12,6 +13,7 @@ interface Lancamento {
   data: string | Date;
   status: 'OK' | 'PENDENTE';
   usuario?: string;
+  criadoEm?: string | Date;
 }
 
 interface Resumo {
@@ -33,6 +35,8 @@ export default function Home() {
   const [lancamentoEdit, setLancamentoEdit] = useState<Lancamento | null>(null);
   const [filtro, setFiltro] = useState('');
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [deletando, setDeletando] = useState(false);
+  const [salvandoEdicao, setSalvandoEdicao] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
@@ -116,7 +120,52 @@ export default function Home() {
     }
   };
 
+  const processarCSV = async (file: File) => {
+    setProcessando(true);
+    setErro('');
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const csvText = e.target?.result as string;
+      try {
+        // Envia CSV como texto - usa mesmos tokens que texto normal!
+        const resProcessar = await fetch('/api/processar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ texto: `Extraia os lancamentos financeiros deste CSV:\n${csvText}` }),
+        });
+        const dataProcessar = await resProcessar.json();
+
+        if (dataProcessar.error) {
+          setErro(dataProcessar.error);
+          return;
+        }
+
+        const resSalvar = await fetch('/api/lancamentos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ lancamentos: dataProcessar.lancamentos, usuario }),
+        });
+        const dataSalvar = await resSalvar.json();
+
+        if (dataSalvar.error) {
+          setErro(dataSalvar.error);
+        } else {
+          setSucesso(dataSalvar.salvos.length + ' lancamento(s) do CSV salvo(s)! (Custo de texto)');
+          carregarDados();
+          setTimeout(() => setSucesso(''), 3000);
+        }
+      } catch { setErro('Erro ao processar CSV.'); }
+      setProcessando(false);
+    };
+    reader.readAsText(file);
+  };
+
   const processarImagem = async (file: File) => {
+    // Aviso de custo alto
+    if (!confirm('⚠️ ATENÇÃO: Fotos consomem 10-20x mais tokens que texto!\n\n💡 Alternativa: Exporte seu extrato como CSV para custo MUITO menor.\n\nDeseja continuar com a foto?')) {
+      return;
+    }
+
     setProcessando(true);
     setErro('');
     const reader = new FileReader();
@@ -145,7 +194,7 @@ export default function Home() {
         if (dataSalvar.error) {
           setErro(dataSalvar.error);
         } else {
-          setSucesso(dataSalvar.salvos.length + ' lancamento(s) salvo(s)!');
+          setSucesso(dataSalvar.salvos.length + ' lancamento(s) salvo(s)! (Alto custo - use CSV)');
           carregarDados();
           setTimeout(() => setSucesso(''), 3000);
         }
@@ -155,7 +204,16 @@ export default function Home() {
     reader.readAsDataURL(file);
   };
 
+  const processarArquivo = (file: File) => {
+    if (file.name.endsWith('.csv')) {
+      processarCSV(file);
+    } else {
+      processarImagem(file);
+    }
+  };
+
   const excluirLancamento = async (id: string) => {
+    setDeletando(true);
     try {
       const res = await fetch(`/api/lancamentos/${id}`, { method: 'DELETE' });
       if (res.ok) {
@@ -165,6 +223,7 @@ export default function Home() {
         setTimeout(() => setSucesso(''), 2000);
       }
     } catch { setErro('Erro ao excluir.'); }
+    finally { setDeletando(false); }
   };
 
   const iniciarEdicao = (l: Lancamento) => {
@@ -174,6 +233,7 @@ export default function Home() {
 
   const salvarEdicao = async () => {
     if (!lancamentoEdit || !editando) return;
+    setSalvandoEdicao(true);
     try {
       const res = await fetch(`/api/lancamentos/${editando}`, {
         method: 'PUT',
@@ -188,10 +248,20 @@ export default function Home() {
         setTimeout(() => setSucesso(''), 2000);
       }
     } catch { setErro('Erro ao atualizar.'); }
+    finally { setSalvandoEdicao(false); }
   };
 
   const formatarValor = (valor: number) => valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   const formatarData = (data: string | Date) => new Date(data).toLocaleDateString('pt-BR');
+  const formatarDataHora = (data: string | Date) => {
+    const d = new Date(data);
+    const hoje = new Date();
+    const ehHoje = d.toDateString() === hoje.toDateString();
+    if (ehHoje) {
+      return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    }
+    return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  };
   const logout = () => { localStorage.removeItem('usuario'); router.push('/login'); };
 
   if (!usuario) return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div></div>;
@@ -199,8 +269,11 @@ export default function Home() {
   return (
     <main className="min-h-screen p-4 max-w-2xl mx-auto pb-20">
       <header className="flex justify-between items-center mb-6">
-        <div><h1 className="text-xl font-bold text-white">Nardotos Finance</h1><p className="text-gray-500 text-sm">{usuario}</p></div>
-        <button onClick={logout} className="text-gray-500 hover:text-white text-sm">Sair</button>
+        <div><h1 className="text-xl font-bold">Nardotos Finance</h1><p className="text-gray-500 text-sm">{usuario}</p></div>
+        <div className="flex items-center gap-3">
+          <ThemeToggle />
+          <button onClick={logout} className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-sm">Sair</button>
+        </div>
       </header>
 
       {/* Navegacao */}
@@ -213,9 +286,9 @@ export default function Home() {
 
       {resumo && (
         <div className="grid grid-cols-3 gap-3 mb-6">
-          <div className="border border-gray-800 rounded-lg p-3 text-center"><p className="text-xs text-gray-500">Receitas</p><p className="text-lg font-bold text-green-500">{formatarValor(resumo.totalReceitas)}</p></div>
-          <div className="border border-gray-800 rounded-lg p-3 text-center"><p className="text-xs text-gray-500">Despesas</p><p className="text-lg font-bold text-red-500">{formatarValor(resumo.totalDespesas)}</p></div>
-          <div className="border border-gray-800 rounded-lg p-3 text-center"><p className="text-xs text-gray-500">Saldo</p><p className={"text-lg font-bold " + (resumo.saldo >= 0 ? 'text-green-500' : 'text-red-500')}>{formatarValor(resumo.saldo)}</p></div>
+          <div className="border border-gray-300 dark:border-gray-800 rounded-lg p-3 text-center bg-white dark:bg-transparent"><p className="text-xs text-gray-500">Receitas</p><p className="text-lg font-bold text-green-600 dark:text-green-400">{formatarValor(resumo.totalReceitas)}</p></div>
+          <div className="border border-gray-300 dark:border-gray-800 rounded-lg p-3 text-center bg-white dark:bg-transparent"><p className="text-xs text-gray-500">Despesas</p><p className="text-lg font-bold text-red-600 dark:text-red-400">{formatarValor(resumo.totalDespesas)}</p></div>
+          <div className="border border-gray-300 dark:border-gray-800 rounded-lg p-3 text-center bg-white dark:bg-transparent"><p className="text-xs text-gray-500">Saldo</p><p className={"text-lg font-bold " + (resumo.saldo >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400')}>{formatarValor(resumo.saldo)}</p></div>
         </div>
       )}
 
@@ -223,9 +296,10 @@ export default function Home() {
         <textarea value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Ex: Gastei 45 no mercado" className="w-full bg-black border border-gray-800 rounded-lg p-3 text-white placeholder-gray-600 resize-none focus:outline-none focus:border-white" rows={2} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviarLancamento(); } }} />
         <div className="flex gap-2 mt-3">
           <button onClick={enviarLancamento} disabled={processando || !texto.trim()} className="flex-1 bg-white hover:bg-gray-200 disabled:bg-gray-800 disabled:text-gray-500 text-black font-medium py-2 px-4 rounded-lg transition">{processando ? 'Salvando...' : 'Enviar'}</button>
-          <button onClick={() => fileInputRef.current?.click()} disabled={processando} className="border border-gray-700 hover:border-white disabled:border-gray-800 disabled:text-gray-500 text-white font-medium py-2 px-4 rounded-lg transition">Extrato</button>
-          <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) processarImagem(file); }} />
+          <button onClick={() => fileInputRef.current?.click()} disabled={processando} className="border border-gray-700 hover:border-white disabled:border-gray-800 disabled:text-gray-500 text-white font-medium py-2 px-4 rounded-lg transition" title="CSV = barato | Foto = 20x mais caro">Extrato CSV/Foto</button>
+          <input ref={fileInputRef} type="file" accept=".csv,image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) processarArquivo(file); }} />
         </div>
+        <p className="text-xs text-gray-500 mt-2 text-center">💡 Use CSV do banco (grátis) ao invés de foto (20x mais caro)</p>
       </div>
 
       {erro && <div className="border border-red-800 text-red-400 rounded-lg p-3 mb-4">{erro}</div>}

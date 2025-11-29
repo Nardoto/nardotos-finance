@@ -12,6 +12,7 @@ interface Lancamento {
   data: string;
   status: 'OK' | 'PENDENTE';
   usuario: string;
+  criadoEm?: string | Date;
 }
 
 interface Resumo {
@@ -67,6 +68,15 @@ export default function Dashboard() {
 
   const formatarValor = (valor: number) => valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   const formatarData = (data: string) => new Date(data).toLocaleDateString('pt-BR');
+  const formatarDataHora = (data: string | Date) => {
+    const d = new Date(data);
+    const hoje = new Date();
+    const ehHoje = d.toDateString() === hoje.toDateString();
+    if (ehHoje) {
+      return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    }
+    return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  };
 
   const getNomeMes = (mesAno: string) => {
     const [ano, mes] = mesAno.split('-');
@@ -94,11 +104,11 @@ export default function Dashboard() {
       </header>
 
       {/* Navegacao */}
-      <div className="flex gap-2 mb-6 text-sm">
-        <button onClick={() => router.push('/')} className="flex-1 border border-gray-700 text-white py-2 px-3 rounded-lg">Lancamentos</button>
-        <button className="flex-1 bg-white text-black py-2 px-3 rounded-lg font-medium">Dashboard</button>
-        <button onClick={() => router.push('/planejamento')} className="flex-1 border border-gray-700 text-white py-2 px-3 rounded-lg">Planejamento</button>
-        <button onClick={() => router.push('/metas')} className="flex-1 border border-gray-700 text-white py-2 px-3 rounded-lg">Metas</button>
+      <div className="flex gap-2 mb-6 text-sm flex-wrap">
+        <button onClick={() => router.push('/')} className="flex-1 border border-gray-700 text-white py-2 px-3 rounded-lg min-w-[70px]">Lancamentos</button>
+        <button className="flex-1 bg-white text-black py-2 px-3 rounded-lg font-medium min-w-[70px]">Dashboard</button>
+        <button onClick={() => router.push('/planejamento')} className="flex-1 border border-gray-700 text-white py-2 px-3 rounded-lg min-w-[70px]">Planejar</button>
+        <button onClick={() => router.push('/categorias')} className="flex-1 border border-gray-700 text-white py-2 px-3 rounded-lg min-w-[70px]">Categorias</button>
       </div>
 
       <div className="flex items-center justify-center gap-4 mb-6">
@@ -203,6 +213,11 @@ export default function Dashboard() {
                 </div>
                 <div className="text-right">
                   <p className="text-xs text-gray-600">{formatarData(l.data)}</p>
+                  {l.criadoEm && (
+                    <p className="text-xs text-gray-700">
+                      {formatarDataHora(l.criadoEm)}
+                    </p>
+                  )}
                   <p className="text-xs text-gray-600">{l.usuario}</p>
                 </div>
               </div>

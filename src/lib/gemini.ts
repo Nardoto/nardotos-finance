@@ -35,7 +35,7 @@ ${[...CATEGORIAS_CONHECIDAS.DESPESAS_FIXAS, ...CATEGORIAS_CONHECIDAS.DESPESAS_VA
 REGRAS:
 1. Se mencionar "gastei", "paguei", "comprei", "débito" → tipo = "DESPESA"
 2. Se mencionar "recebi", "ganhei", "crédito", "salário" → tipo = "RECEITA"
-3. Use uma categoria existente se possível, ou crie uma nova se necessário
+3. IMPORTANTE: SEMPRE use uma categoria da lista acima. NÃO crie sinônimos (ex: use ALUGUEL, não MORADIA; use ALIMENTACAO, não COMIDA)
 4. O valor deve ser um número (ex: 45.90)
 5. Se não houver data específica, use a data de hoje: ${new Date().toISOString().split('T')[0]}
 6. Status padrão é "OK" (já pago/recebido), use "PENDENTE" se o usuário indicar que ainda vai pagar
@@ -107,7 +107,7 @@ ${[...CATEGORIAS_CONHECIDAS.DESPESAS_FIXAS, ...CATEGORIAS_CONHECIDAS.DESPESAS_VA
 REGRAS:
 1. Se mencionar "pagar", "conta", "boleto", "mensalidade" → tipo = "DESPESA"
 2. Se mencionar "receber", "cliente", "salário", "pagamento" → tipo = "RECEITA"
-3. Use uma categoria existente se possível
+3. IMPORTANTE: SEMPRE use uma categoria da lista acima. NÃO crie sinônimos (ex: use ALUGUEL, não MORADIA; use ALIMENTACAO, não COMIDA)
 4. IMPORTANTE: Se o usuário mencionar só o dia (ex: "dia 30", "dia 5"), use o MÊS ATUAL (${mesAtual + 1}) e ANO ATUAL (${anoAtual})
 5. Se o dia já passou no mês atual, use o próximo mês
 6. Data de hoje: ${hoje.toISOString().split('T')[0]}

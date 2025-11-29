@@ -26,6 +26,8 @@ export default function Planejamento() {
     const hoje = new Date();
     return `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;
   });
+  const [pagando, setPagando] = useState<string | null>(null);
+  const [excluindo, setExcluindo] = useState<string | null>(null);
   const router = useRouter();
 
   const meses = [
@@ -113,6 +115,7 @@ export default function Planejamento() {
   };
 
   const marcarPaga = async (id: string) => {
+    setPagando(id);
     try {
       await fetch(`/api/planejamento/${id}`, {
         method: 'PUT',
@@ -123,14 +126,19 @@ export default function Planejamento() {
       setSucesso('Marcado como pago e lancamento criado!');
       setTimeout(() => setSucesso(''), 3000);
     } catch { setErro('Erro ao atualizar.'); }
+    finally { setPagando(null); }
   };
 
   const excluirConta = async (id: string) => {
     if (!confirm('Tem certeza que deseja excluir?')) return;
+    setExcluindo(id);
     try {
       await fetch(`/api/planejamento/${id}`, { method: 'DELETE' });
       carregarContas();
+      setSucesso('Excluido!');
+      setTimeout(() => setSucesso(''), 2000);
     } catch { setErro('Erro ao excluir.'); }
+    finally { setExcluindo(null); }
   };
 
   const formatarValor = (valor: number) => valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -192,18 +200,26 @@ export default function Planejamento() {
         <button onClick={() => router.push('/login')} className="text-gray-500 hover:text-white text-sm">Sair</button>
       </header>
 
-      <div className="flex gap-2 mb-6 text-sm">
-        <button onClick={() => router.push('/')} className="flex-1 border border-gray-700 text-white py-2 px-3 rounded-lg">Lancamentos</button>
-        <button onClick={() => router.push('/dashboard')} className="flex-1 border border-gray-700 text-white py-2 px-3 rounded-lg">Dashboard</button>
-        <button className="flex-1 bg-white text-black py-2 px-3 rounded-lg font-medium">Planejamento</button>
-        <button onClick={() => router.push('/metas')} className="flex-1 border border-gray-700 text-white py-2 px-3 rounded-lg">Metas</button>
+      <div className="flex gap-2 mb-6 text-sm flex-wrap">
+        <button onClick={() => router.push('/')} className="flex-1 border border-gray-700 text-white py-2 px-3 rounded-lg min-w-[70px]">Lancamentos</button>
+        <button onClick={() => router.push('/dashboard')} className="flex-1 border border-gray-700 text-white py-2 px-3 rounded-lg min-w-[70px]">Dashboard</button>
+        <button className="flex-1 bg-white text-black py-2 px-3 rounded-lg font-medium min-w-[70px]">Planejar</button>
+        <button onClick={() => router.push('/categorias')} className="flex-1 border border-gray-700 text-white py-2 px-3 rounded-lg min-w-[70px]">Categorias</button>
       </div>
 
       {/* Seletor de Mes */}
-      <div className="flex items-center justify-center gap-4 mb-6">
-        <button onClick={() => mudarMes(-1)} className="text-gray-400 hover:text-white text-xl px-2">&lt;</button>
-        <h2 className="text-white font-bold text-lg min-w-[150px] text-center">{getNomeMes(mesSelecionado)}</h2>
-        <button onClick={() => mudarMes(1)} className="text-gray-400 hover:text-white text-xl px-2">&gt;</button>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-4 flex-1 justify-center">
+          <button onClick={() => mudarMes(-1)} className="text-gray-400 hover:text-white text-xl px-2">&lt;</button>
+          <h2 className="text-white font-bold text-lg min-w-[150px] text-center">{getNomeMes(mesSelecionado)}</h2>
+          <button onClick={() => mudarMes(1)} className="text-gray-400 hover:text-white text-xl px-2">&gt;</button>
+        </div>
+        <button
+          onClick={() => router.push('/planejamento/dashboard')}
+          className="text-blue-400 hover:text-blue-300 text-sm whitespace-nowrap"
+        >
+          Ver Dashboard
+        </button>
       </div>
 
       {contasAtrasadasGeral.length > 0 && (
@@ -306,18 +322,40 @@ export default function Planejamento() {
                     </p>
                   </div>
                   {!c.paga && (
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 items-center">
                       <button
                         onClick={() => c.id && marcarPaga(c.id)}
-                        className="text-green-500 hover:text-green-400 text-sm px-2 py-1 border border-green-700 rounded"
+                        disabled={pagando === c.id}
+                        className="flex items-center gap-1.5 bg-green-600 hover:bg-green-500 text-white text-sm px-3 py-1.5 rounded-lg font-medium transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100"
+                        title={c.tipo === 'RECEITA' ? 'Marcar como recebido' : 'Marcar como pago'}
                       >
-                        {c.tipo === 'RECEITA' ? 'Recebido' : 'Pago'}
+                        {pagando === c.id ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                            Processando...
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            {c.tipo === 'RECEITA' ? 'Receber' : 'Pagar'}
+                          </>
+                        )}
                       </button>
                       <button
                         onClick={() => c.id && excluirConta(c.id)}
-                        className="text-gray-500 hover:text-red-400 text-sm"
+                        disabled={excluindo === c.id}
+                        className="text-gray-500 hover:text-red-400 text-sm p-1.5 hover:bg-red-900/30 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Excluir"
                       >
-                        X
+                        {excluindo === c.id ? (
+                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-500 border-t-transparent"></div>
+                        ) : (
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        )}
                       </button>
                     </div>
                   )}

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebase';
-import { doc, deleteDoc, updateDoc, Timestamp } from 'firebase/firestore';
+import { getAdminDb } from '@/lib/firebase-admin';
+import { Timestamp } from 'firebase-admin/firestore';
 
 // DELETE - Excluir lançamento
 export async function DELETE(
@@ -9,7 +9,8 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    await deleteDoc(doc(db, 'lancamentos', id));
+    const db = getAdminDb();
+    await db.collection('lancamentos').doc(id).delete();
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Erro ao excluir:', error);
@@ -24,6 +25,7 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
+    const db = getAdminDb();
     const body = await request.json();
 
     const updateData: Record<string, unknown> = {
@@ -39,7 +41,7 @@ export async function PUT(
       updateData.data = Timestamp.fromDate(new Date(body.data));
     }
 
-    await updateDoc(doc(db, 'lancamentos', id), updateData);
+    await db.collection('lancamentos').doc(id).update(updateData);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Erro ao atualizar:', error);
