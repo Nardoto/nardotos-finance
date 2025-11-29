@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import ThemeToggle from '@/components/ThemeToggle';
 
 interface Lancamento {
   id: string;
@@ -94,53 +95,56 @@ export default function Dashboard() {
   const totalDespesas = resumo?.totalDespesas || 0;
   const cores = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4', '#8b5cf6', '#ec4899', '#6b7280'];
 
-  if (!usuario) return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div></div>;
+  if (!usuario) return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-white"></div></div>;
 
   return (
     <main className="min-h-screen p-4 max-w-4xl mx-auto">
       <header className="flex justify-between items-center mb-6">
-        <div><h1 className="text-xl font-bold text-white">Nardotos Finance</h1><p className="text-gray-500 text-sm">{usuario}</p></div>
-        <button onClick={() => router.push('/login')} className="text-gray-500 hover:text-white text-sm">Sair</button>
+        <div><h1 className="text-xl font-bold">Nardotos Finance</h1><p className="text-gray-500 text-sm">{usuario}</p></div>
+        <div className="flex items-center gap-3">
+          <ThemeToggle />
+          <button onClick={() => router.push('/login')} className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-sm">Sair</button>
+        </div>
       </header>
 
       {/* Navegacao */}
       <div className="flex gap-2 mb-6 text-sm flex-wrap">
-        <button onClick={() => router.push('/')} className="flex-1 border border-gray-700 text-white py-2 px-3 rounded-lg min-w-[70px]">Lancamentos</button>
-        <button className="flex-1 bg-white text-black py-2 px-3 rounded-lg font-medium min-w-[70px]">Dashboard</button>
-        <button onClick={() => router.push('/planejamento')} className="flex-1 border border-gray-700 text-white py-2 px-3 rounded-lg min-w-[70px]">Planejar</button>
-        <button onClick={() => router.push('/categorias')} className="flex-1 border border-gray-700 text-white py-2 px-3 rounded-lg min-w-[70px]">Categorias</button>
+        <button onClick={() => router.push('/')} className="flex-1 border border-gray-300 dark:border-gray-700 py-2 px-3 rounded-lg min-w-[70px]">Lancamentos</button>
+        <button className="flex-1 bg-gray-900 dark:bg-white text-white dark:text-black py-2 px-3 rounded-lg font-medium min-w-[70px]">Dashboard</button>
+        <button onClick={() => router.push('/planejamento')} className="flex-1 border border-gray-300 dark:border-gray-700 py-2 px-3 rounded-lg min-w-[70px]">Planejar</button>
+        <button onClick={() => router.push('/categorias')} className="flex-1 border border-gray-300 dark:border-gray-700 py-2 px-3 rounded-lg min-w-[70px]">Categorias</button>
       </div>
 
       <div className="flex items-center justify-center gap-4 mb-6">
-        <button onClick={() => mudarMes(-1)} className="text-gray-500 hover:text-white p-2">Anterior</button>
+        <button onClick={() => mudarMes(-1)} className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 p-2">Anterior</button>
         <h2 className="text-lg font-medium capitalize">{getNomeMes(mesAtual)}</h2>
-        <button onClick={() => mudarMes(1)} className="text-gray-500 hover:text-white p-2">Proximo</button>
+        <button onClick={() => mudarMes(1)} className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 p-2">Proximo</button>
       </div>
 
       {resumo && (
         <>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-            <div className="border border-gray-800 rounded-lg p-4 text-center">
+            <div className="border border-gray-300 dark:border-gray-800 rounded-lg p-4 text-center bg-white dark:bg-transparent">
               <p className="text-xs text-gray-500 mb-1">Receitas</p>
-              <p className="text-xl font-bold text-green-500">{formatarValor(resumo.totalReceitas)}</p>
+              <p className="text-xl font-bold text-green-600 dark:text-green-400">{formatarValor(resumo.totalReceitas)}</p>
             </div>
-            <div className="border border-gray-800 rounded-lg p-4 text-center">
+            <div className="border border-gray-300 dark:border-gray-800 rounded-lg p-4 text-center bg-white dark:bg-transparent">
               <p className="text-xs text-gray-500 mb-1">Despesas</p>
-              <p className="text-xl font-bold text-red-500">{formatarValor(resumo.totalDespesas)}</p>
+              <p className="text-xl font-bold text-red-600 dark:text-red-400">{formatarValor(resumo.totalDespesas)}</p>
             </div>
-            <div className="border border-gray-800 rounded-lg p-4 text-center">
+            <div className="border border-gray-300 dark:border-gray-800 rounded-lg p-4 text-center bg-white dark:bg-transparent">
               <p className="text-xs text-gray-500 mb-1">Saldo</p>
-              <p className={`text-xl font-bold ${resumo.saldo >= 0 ? 'text-green-500' : 'text-red-500'}`}>{formatarValor(resumo.saldo)}</p>
+              <p className={`text-xl font-bold ${resumo.saldo >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>{formatarValor(resumo.saldo)}</p>
             </div>
-            <div className="border border-gray-800 rounded-lg p-4 text-center">
+            <div className="border border-gray-300 dark:border-gray-800 rounded-lg p-4 text-center bg-white dark:bg-transparent">
               <p className="text-xs text-gray-500 mb-1">Lancamentos</p>
-              <p className="text-xl font-bold text-white">{resumo.totalLancamentos}</p>
+              <p className="text-xl font-bold">{resumo.totalLancamentos}</p>
             </div>
           </div>
 
           {/* Gráfico de Pizza - Despesas por Categoria */}
           {resumo.porCategoria.length > 0 && (
-            <div className="border border-gray-800 rounded-lg p-4 mb-6">
+            <div className="border border-gray-300 dark:border-gray-800 rounded-lg p-4 mb-6 bg-white dark:bg-transparent">
               <h3 className="text-gray-500 font-medium mb-4">Despesas por Categoria</h3>
               <div className="flex flex-col md:flex-row gap-6">
                 {/* Gráfico SVG */}
@@ -179,10 +183,10 @@ export default function Dashboard() {
                       <div key={i} className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <div className="w-3 h-3 rounded-full" style={{ backgroundColor: cores[i % cores.length] }} />
-                          <span className="text-sm text-white">{cat.categoria}</span>
+                          <span className="text-sm">{cat.categoria}</span>
                         </div>
                         <div className="text-right">
-                          <span className="text-sm text-red-500">{formatarValor(cat.valor)}</span>
+                          <span className="text-sm text-red-600 dark:text-red-400">{formatarValor(cat.valor)}</span>
                           <span className="text-xs text-gray-500 ml-2">({percentual}%)</span>
                         </div>
                       </div>
@@ -203,9 +207,9 @@ export default function Dashboard() {
         ) : (
           <div className="space-y-2">
             {lancamentos.map((l) => (
-              <div key={l.id} className="flex items-center justify-between border border-gray-800 rounded-lg p-3">
+              <div key={l.id} className="flex items-center justify-between border border-gray-300 dark:border-gray-800 rounded-lg p-3 bg-white dark:bg-transparent">
                 <div>
-                  <p className={`font-medium ${l.tipo === 'RECEITA' ? 'text-green-500' : 'text-red-500'}`}>
+                  <p className={`font-medium ${l.tipo === 'RECEITA' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                     {l.tipo === 'RECEITA' ? '+' : '-'}{formatarValor(l.valor)}
                   </p>
                   <p className="text-sm text-gray-500">{l.categoria}</p>

@@ -278,10 +278,10 @@ export default function Home() {
 
       {/* Navegacao */}
       <div className="flex gap-2 mb-6 text-sm">
-        <button className="flex-1 bg-white text-black py-2 px-3 rounded-lg font-medium">Lancamentos</button>
-        <button onClick={() => router.push('/dashboard')} className="flex-1 border border-gray-700 text-white py-2 px-3 rounded-lg">Dashboard</button>
-        <button onClick={() => router.push('/planejamento')} className="flex-1 border border-gray-700 text-white py-2 px-3 rounded-lg">Planejamento</button>
-        <button onClick={() => router.push('/metas')} className="flex-1 border border-gray-700 text-white py-2 px-3 rounded-lg">Metas</button>
+        <button className="flex-1 bg-gray-900 dark:bg-white text-white dark:text-black py-2 px-3 rounded-lg font-medium">Lancamentos</button>
+        <button onClick={() => router.push('/dashboard')} className="flex-1 border border-gray-300 dark:border-gray-700 py-2 px-3 rounded-lg">Dashboard</button>
+        <button onClick={() => router.push('/planejamento')} className="flex-1 border border-gray-300 dark:border-gray-700 py-2 px-3 rounded-lg">Planejar</button>
+        <button onClick={() => router.push('/categorias')} className="flex-1 border border-gray-300 dark:border-gray-700 py-2 px-3 rounded-lg">Categorias</button>
       </div>
 
       {resumo && (
