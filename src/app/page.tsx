@@ -278,25 +278,25 @@ export default function Home() {
 
       {/* Navegacao */}
       <div className="flex gap-2 mb-6 text-sm">
-        <button className="flex-1 bg-gray-900 dark:bg-white text-white dark:text-black py-2 px-3 rounded-lg font-medium">Lancamentos</button>
-        <button onClick={() => router.push('/dashboard')} className="flex-1 border border-gray-300 dark:border-gray-700 py-2 px-3 rounded-lg">Dashboard</button>
-        <button onClick={() => router.push('/planejamento')} className="flex-1 border border-gray-300 dark:border-gray-700 py-2 px-3 rounded-lg">Planejar</button>
-        <button onClick={() => router.push('/categorias')} className="flex-1 border border-gray-300 dark:border-gray-700 py-2 px-3 rounded-lg">Categorias</button>
+        <button className="flex-1 bg-blue-600 text-white py-2 px-3 rounded-lg font-medium">Lancamentos</button>
+        <button onClick={() => router.push('/dashboard')} className="flex-1 border border-gray-700 text-gray-400 hover:text-white py-2 px-3 rounded-lg">Dashboard</button>
+        <button onClick={() => router.push('/planejamento')} className="flex-1 border border-gray-700 text-gray-400 hover:text-white py-2 px-3 rounded-lg">Planejar</button>
+        <button onClick={() => router.push('/categorias')} className="flex-1 border border-gray-700 text-gray-400 hover:text-white py-2 px-3 rounded-lg">Categorias</button>
       </div>
 
       {resumo && (
         <div className="grid grid-cols-3 gap-3 mb-6">
-          <div className="border border-gray-300 dark:border-gray-800 rounded-lg p-3 text-center bg-white dark:bg-transparent"><p className="text-xs text-gray-500">Receitas</p><p className="text-lg font-bold text-green-600 dark:text-green-400">{formatarValor(resumo.totalReceitas)}</p></div>
-          <div className="border border-gray-300 dark:border-gray-800 rounded-lg p-3 text-center bg-white dark:bg-transparent"><p className="text-xs text-gray-500">Despesas</p><p className="text-lg font-bold text-red-600 dark:text-red-400">{formatarValor(resumo.totalDespesas)}</p></div>
-          <div className="border border-gray-300 dark:border-gray-800 rounded-lg p-3 text-center bg-white dark:bg-transparent"><p className="text-xs text-gray-500">Saldo</p><p className={"text-lg font-bold " + (resumo.saldo >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400')}>{formatarValor(resumo.saldo)}</p></div>
+          <div className="border border-gray-800 rounded-lg p-3 text-center bg-gray-900"><p className="text-xs text-gray-500">Receitas</p><p className="text-lg font-bold text-green-400">{formatarValor(resumo.totalReceitas)}</p></div>
+          <div className="border border-gray-800 rounded-lg p-3 text-center bg-gray-900"><p className="text-xs text-gray-500">Despesas</p><p className="text-lg font-bold text-red-400">{formatarValor(resumo.totalDespesas)}</p></div>
+          <div className="border border-gray-800 rounded-lg p-3 text-center bg-gray-900"><p className="text-xs text-gray-500">Saldo</p><p className={"text-lg font-bold " + (resumo.saldo >= 0 ? 'text-green-400' : 'text-red-400')}>{formatarValor(resumo.saldo)}</p></div>
         </div>
       )}
 
-      <div className="border border-gray-800 rounded-lg p-4 mb-6">
-        <textarea value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Ex: Gastei 45 no mercado" className="w-full bg-black border border-gray-800 rounded-lg p-3 text-white placeholder-gray-600 resize-none focus:outline-none focus:border-white" rows={2} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviarLancamento(); } }} />
+      <div className="border border-gray-800 rounded-lg p-4 mb-6 bg-gray-900">
+        <textarea value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Ex: Gastei 45 no mercado" className="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white placeholder-gray-500 resize-none focus:outline-none focus:border-gray-600" rows={2} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviarLancamento(); } }} />
         <div className="flex gap-2 mt-3">
-          <button onClick={enviarLancamento} disabled={processando || !texto.trim()} className="flex-1 bg-white hover:bg-gray-200 disabled:bg-gray-800 disabled:text-gray-500 text-black font-medium py-2 px-4 rounded-lg transition">{processando ? 'Salvando...' : 'Enviar'}</button>
-          <button onClick={() => fileInputRef.current?.click()} disabled={processando} className="border border-gray-700 hover:border-white disabled:border-gray-800 disabled:text-gray-500 text-white font-medium py-2 px-4 rounded-lg transition" title="CSV = barato | Foto = 20x mais caro">Extrato CSV/Foto</button>
+          <button onClick={enviarLancamento} disabled={processando || !texto.trim()} className="flex-1 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-800 disabled:text-gray-500 text-white font-medium py-2 px-4 rounded-lg transition">{processando ? 'Salvando...' : 'Enviar'}</button>
+          <button onClick={() => fileInputRef.current?.click()} disabled={processando} className="border border-gray-700 hover:border-gray-600 disabled:border-gray-800 disabled:text-gray-500 text-white font-medium py-2 px-4 rounded-lg transition" title="CSV = barato | Foto = 20x mais caro">Extrato CSV/Foto</button>
           <input ref={fileInputRef} type="file" accept=".csv,image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) processarArquivo(file); }} />
         </div>
         <p className="text-xs text-gray-500 mt-2 text-center">💡 Use CSV do banco (grátis) ao invés de foto (20x mais caro)</p>
@@ -311,7 +311,7 @@ export default function Home() {
           value={filtro}
           onChange={(e) => setFiltro(e.target.value)}
           placeholder="Buscar por categoria, descricao ou valor..."
-          className="w-full bg-black border border-gray-800 rounded-lg p-3 text-white placeholder-gray-600 focus:outline-none focus:border-white"
+          className="w-full bg-gray-900 border border-gray-800 rounded-lg p-3 text-white placeholder-gray-500 focus:outline-none focus:border-gray-700"
         />
       </div>
 
@@ -333,33 +333,33 @@ export default function Home() {
         {lancamentosFiltrados.length === 0 ? <p className="text-gray-600 text-center py-8">Nenhum lancamento encontrado</p> : (
           <div className="space-y-2">
             {lancamentosFiltrados.map((l) => (
-              <div key={l.id} className="border border-gray-800 rounded-lg p-3">
+              <div key={l.id} className="border border-gray-800 rounded-lg p-3 bg-gray-900">
                 {editando === l.id ? (
                   <div className="space-y-2">
                     <div className="flex gap-2">
-                      <select value={lancamentoEdit?.tipo} onChange={(e) => setLancamentoEdit(prev => prev ? {...prev, tipo: e.target.value as 'RECEITA' | 'DESPESA'} : null)} className="bg-black border border-gray-700 rounded p-2 text-white">
+                      <select value={lancamentoEdit?.tipo} onChange={(e) => setLancamentoEdit(prev => prev ? {...prev, tipo: e.target.value as 'RECEITA' | 'DESPESA'} : null)} className="bg-gray-800 border border-gray-700 rounded p-2 text-white">
                         <option value="DESPESA">Despesa</option>
                         <option value="RECEITA">Receita</option>
                       </select>
-                      <input type="number" value={lancamentoEdit?.valor} onChange={(e) => setLancamentoEdit(prev => prev ? {...prev, valor: Number(e.target.value)} : null)} className="flex-1 bg-black border border-gray-700 rounded p-2 text-white" />
+                      <input type="number" value={lancamentoEdit?.valor} onChange={(e) => setLancamentoEdit(prev => prev ? {...prev, valor: Number(e.target.value)} : null)} className="flex-1 bg-gray-800 border border-gray-700 rounded p-2 text-white" />
                     </div>
-                    <input value={lancamentoEdit?.categoria} onChange={(e) => setLancamentoEdit(prev => prev ? {...prev, categoria: e.target.value.toUpperCase()} : null)} className="w-full bg-black border border-gray-700 rounded p-2 text-white" placeholder="Categoria" />
-                    <input value={lancamentoEdit?.descricao} onChange={(e) => setLancamentoEdit(prev => prev ? {...prev, descricao: e.target.value} : null)} className="w-full bg-black border border-gray-700 rounded p-2 text-white" placeholder="Descricao" />
+                    <input value={lancamentoEdit?.categoria} onChange={(e) => setLancamentoEdit(prev => prev ? {...prev, categoria: e.target.value.toUpperCase()} : null)} className="w-full bg-gray-800 border border-gray-700 rounded p-2 text-white" placeholder="Categoria" />
+                    <input value={lancamentoEdit?.descricao} onChange={(e) => setLancamentoEdit(prev => prev ? {...prev, descricao: e.target.value} : null)} className="w-full bg-gray-800 border border-gray-700 rounded p-2 text-white" placeholder="Descricao" />
                     <div className="flex gap-2">
-                      <button onClick={salvarEdicao} className="flex-1 bg-white text-black py-2 rounded">Salvar</button>
+                      <button onClick={salvarEdicao} className="flex-1 bg-blue-600 text-white py-2 rounded">Salvar</button>
                       <button onClick={() => { setEditando(null); setLancamentoEdit(null); }} className="flex-1 border border-gray-700 text-white py-2 rounded">Cancelar</button>
                     </div>
                   </div>
                 ) : (
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className={"font-medium " + (l.tipo === 'RECEITA' ? 'text-green-500' : 'text-red-500')}>{l.tipo === 'RECEITA' ? '+' : '-'}{formatarValor(l.valor)}</p>
-                      <p className="text-sm text-gray-500">{l.categoria}</p>
-                      {l.descricao && <p className="text-xs text-gray-600">{l.descricao}</p>}
+                      <p className={"font-medium " + (l.tipo === 'RECEITA' ? 'text-green-400' : 'text-red-400')}>{l.tipo === 'RECEITA' ? '+' : '-'}{formatarValor(l.valor)}</p>
+                      <p className="text-sm text-gray-400">{l.categoria}</p>
+                      {l.descricao && <p className="text-xs text-gray-500">{l.descricao}</p>}
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="text-right">
-                        <p className="text-xs text-gray-600">{formatarData(l.data)}</p>
+                        <p className="text-xs text-gray-500">{formatarData(l.data)}</p>
                         <p className="text-xs text-gray-600">{l.usuario}</p>
                       </div>
                       <div className="flex gap-1">
