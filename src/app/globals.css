@@ -1,13 +1,55 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #000000;
+  /* Background Colors - Dark Navy Theme */
+  --bg-primary: #0a0e1a;
+  --bg-secondary: #0f1629;
+  --bg-card: #151d32;
+  --bg-card-hover: #1a2440;
+  --bg-elevated: #1e2a4a;
+
+  /* Accent Colors - Orange Theme */
+  --accent: #f97316;
+  --accent-light: #fb923c;
+  --accent-dark: #ea580c;
+  --accent-glow: rgba(249, 115, 22, 0.3);
+
+  /* Text Colors */
+  --text-primary: #ffffff;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+
+  /* Semantic Colors */
+  --success: #22c55e;
+  --success-light: #4ade80;
+  --danger: #ef4444;
+  --danger-light: #f87171;
+
+  /* Borders */
+  --border-color: rgba(255, 255, 255, 0.08);
+
+  /* For light theme compatibility */
+  --background: #0a0e1a;
+  --foreground: #ffffff;
 }
 
 [data-theme="dark"] {
-  --background: #000000;
+  --background: #0a0e1a;
   --foreground: #ffffff;
+}
+
+[data-theme="light"] {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --bg-primary: #f8fafc;
+  --bg-secondary: #f1f5f9;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f1f5f9;
+  --bg-elevated: #ffffff;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --border-color: rgba(0, 0, 0, 0.1);
 }
 
 body {
@@ -22,4 +64,47 @@ body {
 
 input, textarea, button, select {
   font-family: inherit;
+}
+
+/* Custom utility classes for the design system */
+.bg-app {
+  background-color: var(--bg-primary);
+}
+
+.bg-card {
+  background-color: var(--bg-card);
+}
+
+.bg-card-hover:hover {
+  background-color: var(--bg-card-hover);
+}
+
+.text-accent {
+  color: var(--accent);
+}
+
+.bg-accent {
+  background-color: var(--accent);
+}
+
+.bg-accent:hover {
+  background-color: var(--accent-dark);
+}
+
+.border-accent {
+  border-color: var(--accent);
+}
+
+.glow-accent {
+  box-shadow: 0 0 40px var(--accent-glow);
+}
+
+/* Chart styles */
+.chart-line {
+  stroke-width: 2px;
+  fill: none;
+}
+
+.chart-dot {
+  r: 4px;
 }

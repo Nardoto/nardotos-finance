@@ -192,7 +192,7 @@ export default function Planejamento() {
   const contasAtrasadasGeral = contas.filter(c => isAtrasada(c));
   const totalAtrasadoGeral = contasAtrasadasGeral.reduce((acc, c) => acc + c.valor, 0);
 
-  if (!usuario) return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-white"></div></div>;
+  if (!usuario) return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div></div>;
 
   return (
     <main className="min-h-screen p-4 max-w-2xl mx-auto">
@@ -200,22 +200,22 @@ export default function Planejamento() {
         <div><h1 className="text-xl font-bold">Nardotos Finance</h1><p className="text-gray-500 text-sm">{usuario}</p></div>
         <div className="flex items-center gap-3">
           <ThemeToggle />
-          <button onClick={() => router.push('/login')} className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-sm">Sair</button>
+          <button onClick={() => router.push('/login')} className="text-gray-500 hover:text-orange-400 text-sm">Sair</button>
         </div>
       </header>
 
       {/* Navegação com abas */}
-      <div className="flex border-b border-gray-200 dark:border-gray-700 mb-6">
-        <button onClick={() => router.push('/')} className="px-4 py-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 border-b-2 border-transparent">
+      <div className="flex border-b border-[#1e2a4a] mb-6">
+        <button onClick={() => router.push('/')} className="px-4 py-2 text-gray-500 hover:text-orange-400 border-b-2 border-transparent">
           Lançamentos
         </button>
-        <button onClick={() => router.push('/dashboard')} className="px-4 py-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 border-b-2 border-transparent">
+        <button onClick={() => router.push('/dashboard')} className="px-4 py-2 text-gray-500 hover:text-orange-400 border-b-2 border-transparent">
           Dashboard
         </button>
-        <button className="px-4 py-2 text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400 font-medium">
+        <button className="px-4 py-2 text-orange-500 border-b-2 border-orange-500 font-medium">
           Planejar
         </button>
-        <button onClick={() => router.push('/categorias')} className="px-4 py-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 border-b-2 border-transparent">
+        <button onClick={() => router.push('/categorias')} className="px-4 py-2 text-gray-500 hover:text-orange-400 border-b-2 border-transparent">
           Categorias
         </button>
       </div>
@@ -223,13 +223,13 @@ export default function Planejamento() {
       {/* Seletor de Mes */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4 flex-1 justify-center">
-          <button onClick={() => mudarMes(-1)} className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 text-xl px-2">&lt;</button>
+          <button onClick={() => mudarMes(-1)} className="text-gray-400 hover:text-orange-400 text-xl px-2">&lt;</button>
           <h2 className="font-bold text-lg min-w-[150px] text-center">{getNomeMes(mesSelecionado)}</h2>
-          <button onClick={() => mudarMes(1)} className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 text-xl px-2">&gt;</button>
+          <button onClick={() => mudarMes(1)} className="text-gray-400 hover:text-orange-400 text-xl px-2">&gt;</button>
         </div>
         <button
           onClick={() => router.push('/planejamento/dashboard')}
-          className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm whitespace-nowrap"
+          className="text-orange-500 hover:text-orange-400 text-sm whitespace-nowrap"
         >
           Ver Dashboard
         </button>
@@ -248,32 +248,32 @@ export default function Planejamento() {
       )}
 
       <div className="grid grid-cols-2 gap-3 mb-6">
-        <div className="border border-gray-800 rounded-lg p-3 text-center bg-gray-900">
+        <div className="border border-[#1e2a4a] rounded-xl p-3 text-center bg-[#151d32]">
           <p className="text-xs text-gray-500">A receber</p>
-          <p className="text-lg font-bold text-green-600 dark:text-green-400">{formatarValor(totalReceitasMes)}</p>
+          <p className="text-lg font-bold text-green-400">{formatarValor(totalReceitasMes)}</p>
         </div>
-        <div className="border border-gray-800 rounded-lg p-3 text-center bg-gray-900">
+        <div className="border border-[#1e2a4a] rounded-xl p-3 text-center bg-[#151d32]">
           <p className="text-xs text-gray-500">A pagar</p>
-          <p className="text-lg font-bold text-red-600 dark:text-red-400">{formatarValor(totalDespesasMes)}</p>
+          <p className="text-lg font-bold text-red-400">{formatarValor(totalDespesasMes)}</p>
         </div>
       </div>
-      <div className="border border-gray-800 rounded-lg p-3 text-center mb-6 bg-gray-900">
+      <div className="border border-[#1e2a4a] rounded-xl p-3 text-center mb-6 bg-[#151d32]">
         <p className="text-xs text-gray-500">Saldo previsto</p>
-        <p className={`text-xl font-bold ${saldoPrevistoMes >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>{formatarValor(saldoPrevistoMes)}</p>
+        <p className={`text-xl font-bold ${saldoPrevistoMes >= 0 ? 'text-green-400' : 'text-red-400'}`}>{formatarValor(saldoPrevistoMes)}</p>
       </div>
 
-      <div className="border border-gray-800 rounded-lg p-4 mb-6 bg-gray-900">
+      <div className="border border-[#1e2a4a] rounded-xl p-4 mb-6 bg-[#151d32]">
         <textarea
           value={texto}
           onChange={(e) => setTexto(e.target.value)}
-          className="w-full bg-transparent placeholder-gray-500 resize-none outline-none min-h-[80px]"
+          className="w-full bg-[#0f1629] border border-[#1e2a4a] rounded-xl p-3 placeholder-gray-500 resize-none outline-none min-h-[80px] focus:border-orange-500/50"
           placeholder="Ex: pagar aluguel 1500 dia 30, luz 180 dia 10, receber freelance 2000 dia 15..."
           disabled={salvando}
         />
         <button
           onClick={processarTexto}
           disabled={salvando || !texto.trim()}
-          className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium disabled:bg-gray-700 disabled:text-gray-500 mt-2"
+          className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-xl font-medium disabled:bg-[#1e2a4a] disabled:text-gray-500 mt-2 transition"
         >
           {salvando ? 'Processando...' : 'Adicionar Planejamento'}
         </button>
@@ -287,7 +287,7 @@ export default function Planejamento() {
           <button
             key={f}
             onClick={() => setFiltro(f)}
-            className={`px-3 py-1 rounded-full ${filtro === f ? 'bg-blue-600 text-white' : 'border border-gray-700 text-gray-600 dark:text-gray-400'}`}
+            className={`px-3 py-1 rounded-full transition ${filtro === f ? 'bg-orange-500 text-white' : 'border border-[#1e2a4a] text-gray-400 hover:border-orange-500/50'}`}
           >
             {f === 'pendentes' && `Pendentes (${contasPendentesMes.length})`}
             {f === 'atrasadas' && `Atrasadas (${contasAtrasadasMes.length})`}
@@ -308,25 +308,25 @@ export default function Planejamento() {
             return (
               <div
                 key={c.id}
-                className={`border rounded-lg p-3 ${
+                className={`border rounded-xl p-3 ${
                   c.paga
-                    ? 'border-gray-800 opacity-60 bg-gray-900'
+                    ? 'border-[#1e2a4a] opacity-60 bg-[#151d32]'
                     : atrasada
-                    ? 'border-red-700 bg-red-100 dark:bg-red-900/20'
+                    ? 'border-red-700 bg-red-900/20'
                     : proximaVencer
-                    ? 'border-yellow-700 bg-yellow-100 dark:bg-yellow-900/20'
-                    : 'border-gray-800 bg-gray-900'
+                    ? 'border-yellow-700 bg-yellow-900/20'
+                    : 'border-[#1e2a4a] bg-[#151d32]'
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <p className={`font-medium ${c.tipo === 'RECEITA' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                      <p className={`font-medium ${c.tipo === 'RECEITA' ? 'text-green-400' : 'text-red-400'}`}>
                         {c.tipo === 'RECEITA' ? '+' : '-'}{formatarValor(c.valor)}
                       </p>
-                      {atrasada && <span className="text-xs bg-red-600 text-white px-2 py-0.5 rounded">ATRASADA</span>}
-                      {proximaVencer && !atrasada && <span className="text-xs bg-yellow-600 text-white px-2 py-0.5 rounded">VENCE EM BREVE</span>}
-                      {c.paga && <span className="text-xs bg-green-600 text-white px-2 py-0.5 rounded">PAGO</span>}
+                      {atrasada && <span className="text-xs bg-red-600 text-white px-2 py-0.5 rounded-full">ATRASADA</span>}
+                      {proximaVencer && !atrasada && <span className="text-xs bg-yellow-600 text-white px-2 py-0.5 rounded-full">VENCE EM BREVE</span>}
+                      {c.paga && <span className="text-xs bg-green-600 text-white px-2 py-0.5 rounded-full">PAGO</span>}
                     </div>
                     <p className="text-sm text-gray-400">{c.descricao}</p>
                     <p className="text-xs text-gray-600">
@@ -339,7 +339,7 @@ export default function Planejamento() {
                       <button
                         onClick={() => c.id && marcarPaga(c.id)}
                         disabled={pagando === c.id}
-                        className="flex items-center gap-1.5 bg-green-600 hover:bg-green-500 text-white text-sm px-3 py-1.5 rounded-lg font-medium transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100"
+                        className="flex items-center gap-1.5 bg-green-600 hover:bg-green-500 text-white text-sm px-3 py-1.5 rounded-xl font-medium transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100"
                         title={c.tipo === 'RECEITA' ? 'Marcar como recebido' : 'Marcar como pago'}
                       >
                         {pagando === c.id ? (
@@ -359,7 +359,7 @@ export default function Planejamento() {
                       <button
                         onClick={() => c.id && excluirConta(c.id)}
                         disabled={excluindo === c.id}
-                        className="text-gray-500 hover:text-red-400 text-sm p-1.5 hover:bg-red-900/30 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="text-gray-500 hover:text-red-400 text-sm p-1.5 hover:bg-red-900/30 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         title="Excluir"
                       >
                         {excluindo === c.id ? (

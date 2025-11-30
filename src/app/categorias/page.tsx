@@ -147,7 +147,7 @@ export default function Categorias() {
   if (!usuario) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-white"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
       </div>
     );
   }
@@ -161,24 +161,24 @@ export default function Categorias() {
         </div>
         <div className="flex items-center gap-3">
           <ThemeToggle />
-          <button onClick={() => router.push('/login')} className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-sm">
+          <button onClick={() => router.push('/login')} className="text-gray-500 hover:text-orange-400 text-sm">
             Sair
           </button>
         </div>
       </header>
 
       {/* Navegação com abas */}
-      <div className="flex border-b border-gray-200 dark:border-gray-700 mb-6">
-        <button onClick={() => router.push('/')} className="px-4 py-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 border-b-2 border-transparent">
+      <div className="flex border-b border-[#1e2a4a] mb-6">
+        <button onClick={() => router.push('/')} className="px-4 py-2 text-gray-500 hover:text-orange-400 border-b-2 border-transparent">
           Lançamentos
         </button>
-        <button onClick={() => router.push('/dashboard')} className="px-4 py-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 border-b-2 border-transparent">
+        <button onClick={() => router.push('/dashboard')} className="px-4 py-2 text-gray-500 hover:text-orange-400 border-b-2 border-transparent">
           Dashboard
         </button>
-        <button onClick={() => router.push('/planejamento')} className="px-4 py-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 border-b-2 border-transparent">
+        <button onClick={() => router.push('/planejamento')} className="px-4 py-2 text-gray-500 hover:text-orange-400 border-b-2 border-transparent">
           Planejar
         </button>
-        <button className="px-4 py-2 text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400 font-medium">
+        <button className="px-4 py-2 text-orange-500 border-b-2 border-orange-500 font-medium">
           Categorias
         </button>
       </div>
@@ -200,34 +200,34 @@ export default function Categorias() {
 
       {carregando ? (
         <div className="flex justify-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-white"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
         </div>
       ) : categorias.length === 0 ? (
         <p className="text-gray-600 text-center py-8">Nenhuma categoria encontrada</p>
       ) : (
         <div className="space-y-2">
           {categorias.map((cat) => (
-            <div key={cat.nome} className="border border-gray-800 rounded-lg p-3 bg-gray-900">
+            <div key={cat.nome} className="border border-[#1e2a4a] rounded-xl p-3 bg-[#151d32]">
               {editando === cat.nome ? (
                 <div className="flex gap-2 items-center">
                   <input
                     type="text"
                     value={novoNome}
                     onChange={(e) => setNovoNome(e.target.value)}
-                    className="flex-1 bg-gray-800 border border-gray-700 rounded px-2 py-1"
+                    className="flex-1 bg-[#0f1629] border border-[#1e2a4a] rounded-xl px-3 py-2 focus:border-orange-500/50 outline-none"
                     placeholder="Novo nome"
                     autoFocus
                   />
                   <button
                     onClick={() => renomearCategoria(cat.nome)}
                     disabled={renomeando}
-                    className="bg-green-600 text-white px-3 py-1 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="bg-green-600 text-white px-3 py-2 rounded-xl text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {renomeando ? 'Salvando...' : 'Salvar'}
                   </button>
                   <button
                     onClick={() => { setEditando(null); setNovoNome(''); }}
-                    className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 px-2"
+                    className="text-gray-500 hover:text-orange-400 px-2"
                   >
                     X
                   </button>
@@ -238,7 +238,7 @@ export default function Categorias() {
                   <select
                     value={categoriaDestino}
                     onChange={(e) => setCategoriaDestino(e.target.value)}
-                    className="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1"
+                    className="w-full bg-[#0f1629] border border-[#1e2a4a] rounded-xl px-3 py-2 focus:border-orange-500/50 outline-none"
                   >
                     <option value="">Selecione a categoria destino</option>
                     {categorias
@@ -251,13 +251,13 @@ export default function Categorias() {
                     <button
                       onClick={() => mesclarCategoria(cat.nome)}
                       disabled={!categoriaDestino || mesclandoCategoria}
-                      className="bg-orange-600 text-white px-3 py-1 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-2 rounded-xl text-sm disabled:opacity-50 disabled:cursor-not-allowed transition"
                     >
                       {mesclandoCategoria ? 'Mesclando...' : 'Confirmar'}
                     </button>
                     <button
                       onClick={() => { setMesclando(null); setCategoriaDestino(''); }}
-                      className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 px-2"
+                      className="text-gray-500 hover:text-orange-400 px-2"
                     >
                       Cancelar
                     </button>
@@ -268,8 +268,8 @@ export default function Categorias() {
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <span className={`w-3 h-3 rounded-full ${
-                        cat.tipo === 'RECEITA' ? 'bg-green-600 dark:bg-green-400' :
-                        cat.tipo === 'DESPESA' ? 'bg-red-600 dark:bg-red-400' : 'bg-yellow-600 dark:bg-yellow-400'
+                        cat.tipo === 'RECEITA' ? 'bg-green-400' :
+                        cat.tipo === 'DESPESA' ? 'bg-red-400' : 'bg-yellow-400'
                       }`}></span>
                       <span className="font-medium">{cat.nome}</span>
                       <span className="text-gray-500 text-sm">({cat.quantidade} registros)</span>
@@ -278,13 +278,13 @@ export default function Categorias() {
                   <div className="flex gap-2">
                     <button
                       onClick={() => { setEditando(cat.nome); setNovoNome(cat.nome); }}
-                      className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm px-2 py-1 border border-blue-600 dark:border-blue-700 rounded"
+                      className="text-orange-500 hover:text-orange-400 text-sm px-2 py-1 border border-orange-500/50 hover:border-orange-500 rounded-xl transition"
                     >
                       Renomear
                     </button>
                     <button
                       onClick={() => setMesclando(cat.nome)}
-                      className="text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 text-sm px-2 py-1 border border-orange-600 dark:border-orange-700 rounded"
+                      className="text-gray-400 hover:text-orange-400 text-sm px-2 py-1 border border-[#1e2a4a] hover:border-orange-500/50 rounded-xl transition"
                     >
                       Mesclar
                     </button>
@@ -296,9 +296,9 @@ export default function Categorias() {
         </div>
       )}
 
-      <div className="mt-6 p-4 border border-gray-800 rounded-lg bg-gray-900">
-        <h3 className="text-gray-600 dark:text-gray-400 text-sm font-medium mb-2">Dicas:</h3>
-        <ul className="text-gray-600 dark:text-gray-500 text-xs space-y-1">
+      <div className="mt-6 p-4 border border-[#1e2a4a] rounded-xl bg-[#151d32]">
+        <h3 className="text-gray-400 text-sm font-medium mb-2">Dicas:</h3>
+        <ul className="text-gray-500 text-xs space-y-1">
           <li>• <strong>Renomear:</strong> Altera o nome da categoria em todos os lancamentos e planejamentos</li>
           <li>• <strong>Mesclar:</strong> Move todos os registros para outra categoria e remove a original</li>
         </ul>
