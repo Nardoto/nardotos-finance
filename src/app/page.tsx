@@ -251,7 +251,7 @@ export default function Home() {
     finally { setSalvandoEdicao(false); }
   };
 
-  const formatarValor = (valor: number) => valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const formatarValor = (valor: number) => (valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   const formatarData = (data: string | Date) => new Date(data).toLocaleDateString('pt-BR');
   const formatarDataHora = (data: string | Date) => {
     const d = new Date(data);

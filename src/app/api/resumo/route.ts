@@ -9,23 +9,21 @@ export async function GET(request: NextRequest) {
     const mes = searchParams.get('mes'); // formato: 2025-01
 
     const lancamentosRef = db.collection('lancamentos');
-    let inicio: Date, fim: Date;
+    let snapshot;
 
     if (mes) {
       const [ano, mesNum] = mes.split('-').map(Number);
-      inicio = new Date(ano, mesNum - 1, 1);
-      fim = new Date(ano, mesNum, 0, 23, 59, 59);
-    } else {
-      // Mês atual
-      const agora = new Date();
-      inicio = new Date(agora.getFullYear(), agora.getMonth(), 1);
-      fim = new Date(agora.getFullYear(), agora.getMonth() + 1, 0, 23, 59, 59);
-    }
+      const inicio = new Date(ano, mesNum - 1, 1);
+      const fim = new Date(ano, mesNum, 0, 23, 59, 59);
 
-    const snapshot = await lancamentosRef
-      .where('data', '>=', Timestamp.fromDate(inicio))
-      .where('data', '<=', Timestamp.fromDate(fim))
-      .get();
+      snapshot = await lancamentosRef
+        .where('data', '>=', Timestamp.fromDate(inicio))
+        .where('data', '<=', Timestamp.fromDate(fim))
+        .get();
+    } else {
+      // Sem filtro de mês - retorna TODOS os lançamentos
+      snapshot = await lancamentosRef.get();
+    }
 
     let totalReceitas = 0;
     let totalDespesas = 0;
