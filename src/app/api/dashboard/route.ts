@@ -8,23 +8,37 @@ export async function GET() {
 
     // Buscar todos os lançamentos de uma vez (muito mais rápido)
     const lancamentosSnapshot = await db.collection('lancamentos').get();
-    const lancamentos = lancamentosSnapshot.docs.map(doc => ({
-      ...doc.data(),
-      id: doc.id
-    }));
+    const lancamentos = lancamentosSnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        ...data,
+        id: doc.id,
+        data: data.data?.toDate ? data.data.toDate() : new Date(data.data) // Converter Timestamp para Date
+      };
+    });
 
-    // Processar dados dos últimos 6 meses localmente (sem mais requisições)
-    for (let i = 5; i >= 0; i--) {
-      const data = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
-      const mesAno = `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}`;
+    // Agrupar lançamentos por mês (TODOS os meses com lançamentos, não apenas últimos 6)
+    const lancamentosPorMes = new Map();
+
+    lancamentos.forEach(l => {
+      const dataLanc = new Date(l.data);
+      const mesAno = `${dataLanc.getFullYear()}-${String(dataLanc.getMonth() + 1).padStart(2, '0')}`;
+      if (!lancamentosPorMes.has(mesAno)) {
+        lancamentosPorMes.set(mesAno, []);
+      }
+      lancamentosPorMes.get(mesAno).push(l);
+    });
+
+    // Ordenar meses e processar
+    const mesesOrdenados = Array.from(lancamentosPorMes.keys()).sort();
+
+    for (const mesAno of mesesOrdenados) {
+      const [ano, mes] = mesAno.split('-').map(Number);
+      const data = new Date(ano, mes - 1, 1);
       const nomeMes = data.toLocaleDateString('pt-BR', { month: 'short' });
 
-      // Filtrar lançamentos do mês
-      const lancamentosDoMes = lancamentos.filter(l => {
-        const dataLanc = new Date(l.data);
-        const mesLanc = `${dataLanc.getFullYear()}-${String(dataLanc.getMonth() + 1).padStart(2, '0')}`;
-        return mesLanc === mesAno;
-      });
+      // Pegar lançamentos do mês do Map
+      const lancamentosDoMes = lancamentosPorMes.get(mesAno) || [];
 
       // Calcular totais
       const totalReceitas = lancamentosDoMes
