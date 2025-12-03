@@ -9,6 +9,7 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const limitCount = parseInt(searchParams.get('limit') || '50');
     const mes = searchParams.get('mes'); // formato: 2025-01
+    const conta = searchParams.get('conta'); // EMPRESA, THARCISIO, ESPOSA
 
     const lancamentosRef = db.collection('lancamentos');
     let q;
@@ -20,13 +21,21 @@ export async function GET(request: NextRequest) {
 
       q = lancamentosRef
         .where('data', '>=', Timestamp.fromDate(inicio))
-        .where('data', '<=', Timestamp.fromDate(fim))
-        .orderBy('data', 'desc')
-        .limit(limitCount);
+        .where('data', '<=', Timestamp.fromDate(fim));
+
+      if (conta) {
+        q = q.where('conta', '==', conta);
+      }
+
+      q = q.orderBy('data', 'desc').limit(limitCount);
     } else {
-      q = lancamentosRef
-        .orderBy('criadoEm', 'desc')
-        .limit(limitCount);
+      q = lancamentosRef;
+
+      if (conta) {
+        q = q.where('conta', '==', conta);
+      }
+
+      q = q.orderBy('criadoEm', 'desc').limit(limitCount);
     }
 
     const snapshot = await q.get();
@@ -95,6 +104,7 @@ export async function POST(request: NextRequest) {
         descricao: lancamento.descricao,
         data: Timestamp.fromDate(new Date(lancamento.data)),
         status: lancamento.status,
+        conta: lancamento.conta || 'THARCISIO',
         usuario: usuario,
         criadoEm: Timestamp.now()
       });

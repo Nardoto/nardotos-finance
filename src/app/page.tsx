@@ -12,6 +12,7 @@ interface Lancamento {
   descricao: string;
   data: string | Date;
   status: 'OK' | 'PENDENTE';
+  conta?: 'EMPRESA' | 'THARCISIO' | 'ESPOSA';
   usuario?: string;
   criadoEm?: string | Date;
 }
@@ -55,6 +56,7 @@ export default function Home() {
   const [categoriasResumo, setCategoriasResumo] = useState<CategoriaResumo[]>([]);
   const [top5Gastos, setTop5Gastos] = useState<Top5Lancamento[]>([]);
   const [insights, setInsights] = useState<Insight[]>([]);
+  const [contaSelecionada, setContaSelecionada] = useState<'TODAS' | 'EMPRESA' | 'THARCISIO' | 'ESPOSA'>('TODAS');
   const [mesSelecionado, setMesSelecionado] = useState(() => {
     const hoje = new Date();
     return `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;
@@ -73,7 +75,7 @@ export default function Home() {
 
   useEffect(() => {
     // Log de versão para debug
-    console.log('%c🚀 Nardotos Finance v3.4 - FASE 2: Insights Automáticos', 'color: #f97316; font-size: 14px; font-weight: bold');
+    console.log('%c🚀 Nardotos Finance v3.5 - Multi-Conta: Empresa, Pessoal e Esposa', 'color: #f97316; font-size: 14px; font-weight: bold');
     console.log('%c✅ Análises inteligentes, comparações mensais, alertas personalizados', 'color: #10b981; font-size: 12px');
 
     const usuarioSalvo = localStorage.getItem('usuario');
@@ -102,31 +104,33 @@ export default function Home() {
     }
   }, [filtro, lancamentosRecentes]);
 
-  // Recarregar dados quando mudar o mês
+  // Recarregar dados quando mudar o mês ou conta
   useEffect(() => {
     if (usuario) {
       carregarDados();
     }
-  }, [mesSelecionado]);
+  }, [mesSelecionado, contaSelecionada]);
 
   const carregarDados = async () => {
     try {
-      const resLancamentos = await fetch(`/api/lancamentos?limit=20&mes=${mesSelecionado}`);
+      const contaParam = contaSelecionada !== 'TODAS' ? `&conta=${contaSelecionada}` : '';
+
+      const resLancamentos = await fetch(`/api/lancamentos?limit=20&mes=${mesSelecionado}${contaParam}`);
       const dataLancamentos = await resLancamentos.json();
       setLancamentosRecentes(dataLancamentos.lancamentos || []);
 
-      const resResumo = await fetch(`/api/resumo?mes=${mesSelecionado}`);
+      const resResumo = await fetch(`/api/resumo?mes=${mesSelecionado}${contaParam}`);
       const dataResumo = await resResumo.json();
       setResumo(dataResumo);
 
       // Carregar dados de categorias (apenas do mês selecionado)
-      const resCategorias = await fetch(`/api/categorias-resumo?mes=${mesSelecionado}`);
+      const resCategorias = await fetch(`/api/categorias-resumo?mes=${mesSelecionado}${contaParam}`);
       const dataCategorias = await resCategorias.json();
       setCategoriasResumo(dataCategorias.categorias || []);
       setTop5Gastos(dataCategorias.top5Lancamentos || []);
 
       // Carregar insights automáticos
-      const resInsights = await fetch(`/api/insights?mes=${mesSelecionado}`);
+      const resInsights = await fetch(`/api/insights?mes=${mesSelecionado}${contaParam}`);
       const dataInsights = await resInsights.json();
       setInsights(dataInsights.insights || []);
     } catch (error) {
@@ -385,6 +389,50 @@ export default function Home() {
           className="bg-[#151d32] border border-[#1e2a4a] hover:border-orange-500 text-white px-4 py-2 rounded-lg transition flex items-center gap-2 hover:bg-[#1e2a4a]"
         >
           Próximo <span className="text-xl">→</span>
+        </button>
+      </div>
+
+      {/* Filtro de Contas */}
+      <div className="flex items-center justify-center gap-2 mb-6 overflow-x-auto">
+        <button
+          onClick={() => setContaSelecionada('TODAS')}
+          className={`px-4 py-2 rounded-lg transition flex items-center gap-2 whitespace-nowrap ${
+            contaSelecionada === 'TODAS'
+              ? 'bg-orange-500 text-white'
+              : 'bg-[#151d32] border border-[#1e2a4a] text-gray-400 hover:border-orange-500/50'
+          }`}
+        >
+          📊 Todas
+        </button>
+        <button
+          onClick={() => setContaSelecionada('EMPRESA')}
+          className={`px-4 py-2 rounded-lg transition flex items-center gap-2 whitespace-nowrap ${
+            contaSelecionada === 'EMPRESA'
+              ? 'bg-orange-500 text-white'
+              : 'bg-[#151d32] border border-[#1e2a4a] text-gray-400 hover:border-orange-500/50'
+          }`}
+        >
+          🏢 Empresa
+        </button>
+        <button
+          onClick={() => setContaSelecionada('THARCISIO')}
+          className={`px-4 py-2 rounded-lg transition flex items-center gap-2 whitespace-nowrap ${
+            contaSelecionada === 'THARCISIO'
+              ? 'bg-orange-500 text-white'
+              : 'bg-[#151d32] border border-[#1e2a4a] text-gray-400 hover:border-orange-500/50'
+          }`}
+        >
+          👤 Você
+        </button>
+        <button
+          onClick={() => setContaSelecionada('ESPOSA')}
+          className={`px-4 py-2 rounded-lg transition flex items-center gap-2 whitespace-nowrap ${
+            contaSelecionada === 'ESPOSA'
+              ? 'bg-orange-500 text-white'
+              : 'bg-[#151d32] border border-[#1e2a4a] text-gray-400 hover:border-orange-500/50'
+          }`}
+        >
+          👥 Esposa
         </button>
       </div>
 

@@ -39,6 +39,10 @@ REGRAS:
 4. O valor deve ser um número (ex: 45.90)
 5. Se não houver data específica, use a data de hoje: ${new Date().toISOString().split('T')[0]}
 6. Status padrão é "OK" (já pago/recebido), use "PENDENTE" se o usuário indicar que ainda vai pagar
+7. CONTA: Detecte de qual conta é o lançamento:
+   - Se mencionar "empresa", "PJ", "da empresa", "conta PJ" → conta = "EMPRESA"
+   - Se mencionar "esposa", "dela", "minha esposa" → conta = "ESPOSA"
+   - Se mencionar "minha conta", "meu dinheiro", "eu", ou não especificar → conta = "THARCISIO"
 
 Responda APENAS com um JSON válido no formato:
 {
@@ -49,7 +53,8 @@ Responda APENAS com um JSON válido no formato:
       "categoria": "ALIMENTACAO",
       "descricao": "Almoço no restaurante",
       "data": "2025-01-15",
-      "status": "OK"
+      "status": "OK",
+      "conta": "THARCISIO" ou "EMPRESA" ou "ESPOSA"
     }
   ]
 }`;
@@ -66,13 +71,14 @@ Responda APENAS com um JSON válido no formato:
 
     const parsed = JSON.parse(jsonMatch[0]);
 
-    return parsed.lancamentos.map((l: { tipo: string; valor: number; categoria: string; descricao: string; data: string; status: string }) => ({
+    return parsed.lancamentos.map((l: { tipo: string; valor: number; categoria: string; descricao: string; data: string; status: string; conta?: string }) => ({
       tipo: l.tipo as 'RECEITA' | 'DESPESA',
       valor: Number(l.valor),
       categoria: l.categoria.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''),
       descricao: l.descricao,
       data: new Date(l.data),
-      status: (l.status || 'OK') as 'OK' | 'PENDENTE'
+      status: (l.status || 'OK') as 'OK' | 'PENDENTE',
+      conta: (l.conta || 'THARCISIO') as 'EMPRESA' | 'THARCISIO' | 'ESPOSA'
     }));
   } catch (error) {
     console.error('Erro ao processar com Gemini:', error);
@@ -206,13 +212,14 @@ Responda APENAS com um JSON válido no formato:
 
     const parsed = JSON.parse(jsonMatch[0]);
 
-    return parsed.lancamentos.map((l: { tipo: string; valor: number; categoria: string; descricao: string; data: string; status: string }) => ({
+    return parsed.lancamentos.map((l: { tipo: string; valor: number; categoria: string; descricao: string; data: string; status: string; conta?: string }) => ({
       tipo: l.tipo as 'RECEITA' | 'DESPESA',
       valor: Number(l.valor),
       categoria: l.categoria.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''),
       descricao: l.descricao,
       data: new Date(l.data),
-      status: (l.status || 'OK') as 'OK' | 'PENDENTE'
+      status: (l.status || 'OK') as 'OK' | 'PENDENTE',
+      conta: (l.conta || 'THARCISIO') as 'EMPRESA' | 'THARCISIO' | 'ESPOSA'
     }));
   } catch (error) {
     console.error('Erro ao processar imagem com Gemini:', error);

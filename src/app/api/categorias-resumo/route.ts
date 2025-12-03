@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
     const db = getAdminDb();
     const searchParams = request.nextUrl.searchParams;
     const mes = searchParams.get('mes'); // formato: 2025-12
+    const conta = searchParams.get('conta'); // EMPRESA, THARCISIO, ESPOSA
 
     const lancamentosRef = db.collection('lancamentos');
     let snapshot;
@@ -22,13 +23,24 @@ export async function GET(request: NextRequest) {
       const inicio = new Date(ano, mesNum - 1, 1);
       const fim = new Date(ano, mesNum, 0, 23, 59, 59);
 
-      snapshot = await lancamentosRef
+      let q = lancamentosRef
         .where('data', '>=', inicio)
-        .where('data', '<=', fim)
-        .get();
+        .where('data', '<=', fim);
+
+      if (conta) {
+        q = q.where('conta', '==', conta);
+      }
+
+      snapshot = await q.get();
     } else {
       // Pegar tudo se não especificar mês
-      snapshot = await lancamentosRef.get();
+      let q = lancamentosRef;
+
+      if (conta) {
+        q = q.where('conta', '==', conta);
+      }
+
+      snapshot = await q.get();
     }
 
     // Agrupar por categoria (APENAS DESPESAS para o gráfico)

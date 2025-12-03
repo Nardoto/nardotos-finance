@@ -7,6 +7,7 @@ export async function GET(request: NextRequest) {
     const db = getAdminDb();
     const searchParams = request.nextUrl.searchParams;
     const mes = searchParams.get('mes'); // formato: 2025-01
+    const conta = searchParams.get('conta'); // EMPRESA, THARCISIO, ESPOSA
 
     const lancamentosRef = db.collection('lancamentos');
     let snapshot;
@@ -18,15 +19,25 @@ export async function GET(request: NextRequest) {
       const fim = new Date(ano, mesNum, 0, 23, 59, 59);
 
       // Buscar lançamentos do mês atual
-      snapshot = await lancamentosRef
+      let q = lancamentosRef
         .where('data', '>=', Timestamp.fromDate(inicio))
-        .where('data', '<=', Timestamp.fromDate(fim))
-        .get();
+        .where('data', '<=', Timestamp.fromDate(fim));
+
+      if (conta) {
+        q = q.where('conta', '==', conta);
+      }
+
+      snapshot = await q.get();
 
       // Calcular saldo anterior (todos os lançamentos ANTES do mês atual)
-      const snapshotAnterior = await lancamentosRef
-        .where('data', '<', Timestamp.fromDate(inicio))
-        .get();
+      let qAnterior = lancamentosRef
+        .where('data', '<', Timestamp.fromDate(inicio));
+
+      if (conta) {
+        qAnterior = qAnterior.where('conta', '==', conta);
+      }
+
+      const snapshotAnterior = await qAnterior.get();
 
       snapshotAnterior.docs.forEach(doc => {
         const data = doc.data();
@@ -41,7 +52,13 @@ export async function GET(request: NextRequest) {
       });
     } else {
       // Sem filtro de mês - retorna TODOS os lançamentos
-      snapshot = await lancamentosRef.get();
+      let q = lancamentosRef;
+
+      if (conta) {
+        q = q.where('conta', '==', conta);
+      }
+
+      snapshot = await q.get();
     }
 
     let totalReceitas = 0;

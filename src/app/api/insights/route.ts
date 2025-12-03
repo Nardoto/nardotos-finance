@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
     const db = getAdminDb();
     const searchParams = request.nextUrl.searchParams;
     const mes = searchParams.get('mes'); // formato: 2025-12
+    const conta = searchParams.get('conta'); // EMPRESA, THARCISIO, ESPOSA
 
     if (!mes) {
       return NextResponse.json({ error: 'Mês não informado' }, { status: 400 });
@@ -29,16 +30,26 @@ export async function GET(request: NextRequest) {
     const lancamentosRef = db.collection('lancamentos');
 
     // Buscar dados do mês atual
-    const snapshotAtual = await lancamentosRef
+    let qAtual = lancamentosRef
       .where('data', '>=', Timestamp.fromDate(inicioAtual))
-      .where('data', '<=', Timestamp.fromDate(fimAtual))
-      .get();
+      .where('data', '<=', Timestamp.fromDate(fimAtual));
+
+    if (conta) {
+      qAtual = qAtual.where('conta', '==', conta);
+    }
+
+    const snapshotAtual = await qAtual.get();
 
     // Buscar dados do mês anterior
-    const snapshotAnterior = await lancamentosRef
+    let qAnterior = lancamentosRef
       .where('data', '>=', Timestamp.fromDate(inicioAnterior))
-      .where('data', '<=', Timestamp.fromDate(fimAnterior))
-      .get();
+      .where('data', '<=', Timestamp.fromDate(fimAnterior));
+
+    if (conta) {
+      qAnterior = qAnterior.where('conta', '==', conta);
+    }
+
+    const snapshotAnterior = await qAnterior.get();
 
     // Processar dados do mês atual
     let receitasAtual = 0;

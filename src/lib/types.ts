@@ -18,6 +18,7 @@ export interface Lancamento {
   descricao: string;
   data: Date;
   status: StatusLancamento;
+  conta?: ContaLancamento;
   usuario: Usuario;
   criadoEm: Date;
 }
@@ -27,6 +28,8 @@ export interface LancamentoInput {
   imagemBase64?: string;
 }
 
+export type ContaLancamento = 'EMPRESA' | 'THARCISIO' | 'ESPOSA';
+
 export interface LancamentoProcessado {
   tipo: TipoLancamento;
   valor: number;
@@ -34,4 +37,5 @@ export interface LancamentoProcessado {
   descricao: string;
   data: Date;
   status: StatusLancamento;
+  conta?: ContaLancamento;
 }
