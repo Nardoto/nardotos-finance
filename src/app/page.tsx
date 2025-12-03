@@ -66,6 +66,7 @@ export default function Home() {
   const [insights, setInsights] = useState<Insight[]>([]);
   const [orcamento, setOrcamento] = useState<Orcamento | null>(null);
   const [contaSelecionada, setContaSelecionada] = useState<'TODAS' | 'EMPRESA' | 'THARCISIO' | 'ESPOSA'>('TODAS');
+  const [categoriaSelecionada, setCategoriaSelecionada] = useState<string>('TODAS');
   const [mesSelecionado, setMesSelecionado] = useState(() => {
     const hoje = new Date();
     return `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;
@@ -79,13 +80,17 @@ export default function Home() {
   const [deletando, setDeletando] = useState(false);
   const [salvandoEdicao, setSalvandoEdicao] = useState(false);
   const [modalAberto, setModalAberto] = useState(false);
+  const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
+  const [edicaoEmMassaAberta, setEdicaoEmMassaAberta] = useState(false);
+  const [edicaoEmMassa, setEdicaoEmMassa] = useState<{ conta?: 'EMPRESA' | 'THARCISIO' | 'ESPOSA'; categoria?: string }>({});
+  const [salvandoEmMassa, setSalvandoEmMassa] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
   useEffect(() => {
     // Log de versão para debug
-    console.log('%c🚀 Nardotos Finance v3.6 - FASE 3: Orçamento e Metas', 'color: #f97316; font-size: 14px; font-weight: bold');
-    console.log('%c💰 Controle de gastos por categoria, barras de progresso visuais', 'color: #10b981; font-size: 12px');
+    console.log('%c🚀 Nardotos Finance v3.7 - Editor em Massa + Filtros Avançados', 'color: #f97316; font-size: 14px; font-weight: bold');
+    console.log('%c✅ Editor em massa, filtro por categoria, alertas de orçamento', 'color: #10b981; font-size: 12px');
 
     const usuarioSalvo = localStorage.getItem('usuario');
     if (!usuarioSalvo) {
@@ -101,17 +106,25 @@ export default function Home() {
   }, [router]);
 
   useEffect(() => {
+    let resultado = lancamentosRecentes;
+
+    // Filtro por categoria
+    if (categoriaSelecionada !== 'TODAS') {
+      resultado = resultado.filter(l => l.categoria === categoriaSelecionada);
+    }
+
+    // Filtro por texto
     if (filtro) {
       const termo = filtro.toLowerCase();
-      setLancamentosFiltrados(lancamentosRecentes.filter(l =>
+      resultado = resultado.filter(l =>
         l.categoria.toLowerCase().includes(termo) ||
         l.descricao?.toLowerCase().includes(termo) ||
         l.valor.toString().includes(termo)
-      ));
-    } else {
-      setLancamentosFiltrados(lancamentosRecentes);
+      );
     }
-  }, [filtro, lancamentosRecentes]);
+
+    setLancamentosFiltrados(resultado);
+  }, [filtro, lancamentosRecentes, categoriaSelecionada]);
 
   // Recarregar dados quando mudar o mês ou conta
   useEffect(() => {
@@ -328,6 +341,73 @@ export default function Home() {
     finally { setSalvandoEdicao(false); }
   };
 
+  const toggleSelecionado = (id: string) => {
+    setSelecionados(prev => {
+      const novo = new Set(prev);
+      if (novo.has(id)) {
+        novo.delete(id);
+      } else {
+        novo.add(id);
+      }
+      return novo;
+    });
+  };
+
+  const toggleSelecionarTodos = () => {
+    if (selecionados.size === lancamentosFiltrados.length) {
+      setSelecionados(new Set());
+    } else {
+      setSelecionados(new Set(lancamentosFiltrados.map(l => l.id!)));
+    }
+  };
+
+  const abrirEdicaoEmMassa = () => {
+    setEdicaoEmMassaAberta(true);
+    setEdicaoEmMassa({});
+  };
+
+  const salvarEdicaoEmMassa = async () => {
+    if (selecionados.size === 0) return;
+    if (!edicaoEmMassa.conta && !edicaoEmMassa.categoria) {
+      setErro('Selecione pelo menos um campo para editar');
+      return;
+    }
+
+    setSalvandoEmMassa(true);
+    try {
+      const promises = Array.from(selecionados).map(id => {
+        const lancamento = lancamentosRecentes.find(l => l.id === id);
+        if (!lancamento) return null;
+
+        const atualizado = {
+          ...lancamento,
+          ...(edicaoEmMassa.conta && { conta: edicaoEmMassa.conta }),
+          ...(edicaoEmMassa.categoria && { categoria: edicaoEmMassa.categoria })
+        };
+
+        return fetch(`/api/lancamentos/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(atualizado),
+        });
+      });
+
+      await Promise.all(promises);
+
+      setEdicaoEmMassaAberta(false);
+      setSelecionados(new Set());
+      setEdicaoEmMassa({});
+      carregarDados();
+      setSucesso(`${selecionados.size} lançamento(s) atualizado(s)!`);
+      setTimeout(() => setSucesso(''), 2000);
+    } catch (error) {
+      setErro('Erro ao atualizar em massa');
+      console.error(error);
+    } finally {
+      setSalvandoEmMassa(false);
+    }
+  };
+
   // Helper para gráfico de pizza
   const getCoordinatesForPercent = (percent: number) => {
     const x = 60 + 50 * Math.cos(2 * Math.PI * percent - Math.PI / 2);
@@ -456,6 +536,64 @@ export default function Home() {
         </button>
       </div>
 
+      {/* Filtro de Categoria */}
+      {categoriasResumo.length > 0 && (
+        <div className="flex items-center justify-center gap-2 mb-6">
+          <span className="text-[10px] text-gray-600">Categoria:</span>
+          <select
+            value={categoriaSelecionada}
+            onChange={(e) => setCategoriaSelecionada(e.target.value)}
+            className="bg-[#151d32] border border-[#1e2a4a] hover:border-orange-500 text-white text-xs px-3 py-1.5 rounded-lg transition focus:outline-none focus:border-orange-500"
+          >
+            <option value="TODAS">Todas</option>
+            {categoriasResumo.map(cat => (
+              <option key={cat.categoria} value={cat.categoria}>
+                {cat.categoria} ({cat.percentual.toFixed(0)}% - {(cat.total || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })})
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {/* Alertas de Orçamento */}
+      {orcamento && Object.keys(orcamento.categorias).length > 0 && (() => {
+        const alertas = categoriasResumo
+          .filter(c => orcamento.categorias[c.categoria])
+          .map(c => ({
+            categoria: c.categoria,
+            percentual: (c.total / orcamento.categorias[c.categoria]) * 100,
+            gasto: c.total,
+            limite: orcamento.categorias[c.categoria]
+          }))
+          .filter(a => a.percentual >= 80)
+          .sort((a, b) => b.percentual - a.percentual);
+
+        if (alertas.length > 0) {
+          return (
+            <div className="border border-yellow-500/50 bg-gradient-to-br from-yellow-900/20 to-orange-900/20 rounded-xl p-4 mb-6">
+              <h3 className="text-sm font-medium text-yellow-400 mb-3 flex items-center gap-2">
+                <span>⚠️</span> Alertas de Orçamento
+              </h3>
+              <div className="space-y-2">
+                {alertas.map(alerta => {
+                  const corTexto = alerta.percentual >= 100 ? 'text-red-400' : 'text-yellow-400';
+                  const icone = alerta.percentual >= 100 ? '🔴' : '🟡';
+                  return (
+                    <div key={alerta.categoria} className="text-sm">
+                      <span className={corTexto}>{icone} {alerta.categoria}:</span>{' '}
+                      <span className="text-white font-medium">{alerta.percentual.toFixed(0)}%</span>{' '}
+                      <span className="text-gray-400 text-xs">
+                        ({(alerta.gasto || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} / {(alerta.limite || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })})
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        }
+      })()}
+
       {/* Fluxo de Caixa - Card Principal */}
       {resumo && (
         <div className="border-2 border-orange-500 rounded-xl p-4 mb-6 bg-gradient-to-br from-[#151d32] to-[#0f1629]">
@@ -536,11 +674,18 @@ export default function Home() {
                   let cumulativePercent = 0;
                   const top5 = categoriasResumo.filter(c => c.total > 0).slice(0, 5);
 
-                  return top5.map((cat, index) => {
+                  // Recalcular percentuais para as top 5 somarem 100%
+                  const totalTop5 = top5.reduce((sum, c) => sum + c.total, 0);
+                  const top5ComPercentualAjustado = top5.map(c => ({
+                    ...c,
+                    percentualPizza: (c.total / totalTop5) * 100
+                  }));
+
+                  return top5ComPercentualAjustado.map((cat, index) => {
                     const [x, y] = getCoordinatesForPercent(cumulativePercent);
-                    cumulativePercent += cat.percentual / 100;
+                    cumulativePercent += cat.percentualPizza / 100;
                     const [nextX, nextY] = getCoordinatesForPercent(cumulativePercent);
-                    const largeArcFlag = cat.percentual > 50 ? 1 : 0;
+                    const largeArcFlag = cat.percentualPizza > 50 ? 1 : 0;
 
                     const pathData = [
                       `M 60 60`,
@@ -560,14 +705,22 @@ export default function Home() {
                   const colors = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6']; // vermelho, azul, verde, amarelo, roxo
                   return (
                     <div key={cat.categoria} className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: colors[index % colors.length] }}></div>
-                        <span className="text-gray-400 truncate max-w-[100px]">{cat.categoria}</span>
+                      <div className="flex items-center gap-2 flex-1">
+                        <div className="w-3 h-3 rounded-sm flex-shrink-0" style={{ backgroundColor: colors[index % colors.length] }}></div>
+                        <span className="text-gray-400 truncate">{cat.categoria}</span>
                       </div>
-                      <span className="text-white font-medium">{cat.percentual.toFixed(0)}%</span>
+                      <span className="text-white font-medium">{cat.percentual.toFixed(1)}%</span>
                     </div>
                   );
                 })}
+                {categoriasResumo.filter(c => c.total > 0).length > 5 && (
+                  <div className="flex items-center justify-between text-xs pt-1 border-t border-[#1e2a4a]">
+                    <span className="text-gray-500 text-[10px]">Outras categorias</span>
+                    <span className="text-gray-500 text-[10px]">
+                      {(100 - categoriasResumo.filter(c => c.total > 0).slice(0, 5).reduce((sum, c) => sum + c.percentual, 0)).toFixed(1)}%
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -770,7 +923,31 @@ export default function Home() {
       )}
 
       <div>
-        <h3 className="text-gray-500 font-medium mb-3">Lancamentos ({lancamentosFiltrados.length})</h3>
+        {/* Cabeçalho com Seleção em Massa */}
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-3">
+            <h3 className="text-gray-500 font-medium">Lancamentos ({lancamentosFiltrados.length})</h3>
+            {lancamentosFiltrados.length > 0 && (
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={selecionados.size === lancamentosFiltrados.length && lancamentosFiltrados.length > 0}
+                  onChange={toggleSelecionarTodos}
+                  className="w-4 h-4 rounded border-[#1e2a4a] bg-[#0f1629] text-orange-500 focus:ring-orange-500"
+                />
+                <span className="text-xs text-gray-500">Todos</span>
+              </label>
+            )}
+          </div>
+          {selecionados.size > 0 && (
+            <button
+              onClick={abrirEdicaoEmMassa}
+              className="bg-orange-500 hover:bg-orange-600 text-white text-sm px-4 py-2 rounded-lg transition"
+            >
+              Editar {selecionados.size} selecionado(s)
+            </button>
+          )}
+        </div>
         {lancamentosFiltrados.length === 0 ? <p className="text-gray-600 text-center py-8">Nenhum lancamento encontrado</p> : (
           <div className="space-y-2">
             {lancamentosFiltrados.map((l) => (
@@ -797,18 +974,25 @@ export default function Home() {
                     </div>
                   </div>
                 ) : (
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className={"font-medium " + (l.tipo === 'RECEITA' ? 'text-green-400' : 'text-red-400')}>{l.tipo === 'RECEITA' ? '+' : '-'}{formatarValor(l.valor)}</p>
-                      <p className="text-sm text-gray-400">{l.categoria}</p>
-                      {l.descricao && <p className="text-xs text-gray-500">{l.descricao}</p>}
-                      {l.conta && (
-                        <p className="text-[10px] text-gray-600 mt-1">
-                          {l.conta === 'EMPRESA' ? '🏢 Empresa' : l.conta === 'ESPOSA' ? '👥 Tamires' : '👤 Tharcisio'}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      checked={selecionados.has(l.id!)}
+                      onChange={() => toggleSelecionado(l.id!)}
+                      className="w-4 h-4 rounded border-[#1e2a4a] bg-[#0f1629] text-orange-500 focus:ring-orange-500 flex-shrink-0"
+                    />
+                    <div className="flex-1 flex items-center justify-between">
+                      <div>
+                        <p className={"font-medium " + (l.tipo === 'RECEITA' ? 'text-green-400' : 'text-red-400')}>{l.tipo === 'RECEITA' ? '+' : '-'}{formatarValor(l.valor)}</p>
+                        <p className="text-sm text-gray-400">{l.categoria}</p>
+                        {l.descricao && <p className="text-xs text-gray-500">{l.descricao}</p>}
+                        {l.conta && (
+                          <p className="text-[10px] text-gray-600 mt-1">
+                            {l.conta === 'EMPRESA' ? '🏢 Empresa' : l.conta === 'ESPOSA' ? '👥 Tamires' : '👤 Tharcisio'}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3">
                       <div className="text-right">
                         <p className="text-xs text-gray-500">{formatarData(l.data)}</p>
                         <p className="text-xs text-gray-600">{l.usuario}</p>
@@ -818,6 +1002,7 @@ export default function Home() {
                         <button onClick={() => setConfirmDelete(l.id || null)} className="text-gray-500 hover:text-red-400 text-sm px-2">X</button>
                       </div>
                     </div>
+                    </div>
                   </div>
                 )}
               </div>
@@ -826,9 +1011,62 @@ export default function Home() {
         )}
       </div>
 
+      {/* Modal de Edição em Massa */}
+      {edicaoEmMassaAberta && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#151d32] border border-[#1e2a4a] rounded-xl p-6 w-full max-w-md">
+            <h3 className="text-xl font-bold text-white mb-4">Editar {selecionados.size} lançamento(s)</h3>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm text-gray-400 mb-2 block">Alterar Conta (opcional)</label>
+                <select
+                  value={edicaoEmMassa.conta || ''}
+                  onChange={(e) => setEdicaoEmMassa(prev => ({ ...prev, conta: e.target.value as 'EMPRESA' | 'THARCISIO' | 'ESPOSA' || undefined }))}
+                  className="w-full bg-[#0f1629] border border-[#1e2a4a] rounded-xl p-3 text-white"
+                >
+                  <option value="">Não alterar</option>
+                  <option value="THARCISIO">👤 Tharcisio</option>
+                  <option value="ESPOSA">👥 Tamires</option>
+                  <option value="EMPRESA">🏢 Empresa</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-sm text-gray-400 mb-2 block">Alterar Categoria (opcional)</label>
+                <input
+                  type="text"
+                  value={edicaoEmMassa.categoria || ''}
+                  onChange={(e) => setEdicaoEmMassa(prev => ({ ...prev, categoria: e.target.value.toUpperCase() || undefined }))}
+                  placeholder="Ex: ALIMENTACAO"
+                  className="w-full bg-[#0f1629] border border-[#1e2a4a] rounded-xl p-3 text-white placeholder-gray-500"
+                />
+              </div>
+
+              <div className="flex gap-2 pt-4">
+                <button
+                  onClick={salvarEdicaoEmMassa}
+                  disabled={salvandoEmMassa}
+                  className="flex-1 bg-orange-500 hover:bg-orange-600 disabled:bg-[#1e2a4a] disabled:text-gray-500 text-white font-medium py-3 rounded-xl transition"
+                >
+                  {salvandoEmMassa ? 'Salvando...' : 'Salvar Alterações'}
+                </button>
+                <button
+                  onClick={() => { setEdicaoEmMassaAberta(false); setEdicaoEmMassa({}); }}
+                  disabled={salvandoEmMassa}
+                  className="flex-1 border border-[#1e2a4a] hover:border-orange-500/50 disabled:border-[#1e2a4a] disabled:text-gray-500 text-white font-medium py-3 rounded-xl transition"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Indicador de versão */}
       <div className="fixed bottom-2 left-2 text-[10px] text-gray-600 bg-[#0f1629] px-2 py-1 rounded border border-[#1e2a4a]">
-        v3.6 • {new Date().toISOString().split('T')[0]}
+        v3.7 • {new Date().toISOString().split('T')[0]}
       </div>
     </main>
   );
