@@ -17,14 +17,18 @@ interface CategoriaResumo {
   percentual: number;
 }
 
-export default function OrcamentoWidget() {
+interface OrcamentoWidgetProps {
+  mes?: string;
+}
+
+export default function OrcamentoWidget({ mes }: OrcamentoWidgetProps) {
   const [usuario, setUsuario] = useState<string | null>(null);
   const [orcamento, setOrcamento] = useState<Orcamento | null>(null);
   const [categoriasResumo, setCategoriasResumo] = useState<CategoriaResumo[]>([]);
-  const [mesSelecionado, setMesSelecionado] = useState(() => {
+  const mesSelecionado = mes || (() => {
     const hoje = new Date();
     return `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;
-  });
+  })();
   const router = useRouter();
 
   useEffect(() => {
@@ -77,7 +81,7 @@ export default function OrcamentoWidget() {
             <p className="text-xs text-gray-400">Defina metas de gastos para controlar melhor suas finanças</p>
           </div>
           <button
-            onClick={() => router.push('/orcamento')}
+            onClick={() => router.push(`/orcamento?mes=${mesSelecionado}`)}
             className="bg-orange-500 hover:bg-orange-600 text-white text-xs px-4 py-2 rounded-lg transition whitespace-nowrap"
           >
             Configurar
@@ -100,7 +104,7 @@ export default function OrcamentoWidget() {
             </div>
           </div>
           <button
-            onClick={() => router.push('/orcamento')}
+            onClick={() => router.push(`/orcamento?mes=${mesSelecionado}`)}
             className="text-xs text-gray-500 hover:text-orange-400 transition"
           >
             Ver detalhes →
@@ -118,7 +122,7 @@ export default function OrcamentoWidget() {
           <span>⚠️</span> Alertas de Orçamento
         </h3>
         <button
-          onClick={() => router.push('/orcamento')}
+          onClick={() => router.push(`/orcamento?mes=${mesSelecionado}`)}
           className="text-xs text-orange-400 hover:text-orange-300 transition"
         >
           Gerenciar →

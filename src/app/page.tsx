@@ -138,7 +138,7 @@ export default function Home() {
     try {
       const contaParam = contaSelecionada !== 'TODAS' ? `&conta=${contaSelecionada}` : '';
 
-      const resLancamentos = await fetch(`/api/lancamentos?limit=20&mes=${mesSelecionado}${contaParam}`);
+      const resLancamentos = await fetch(`/api/lancamentos?limit=1000&mes=${mesSelecionado}${contaParam}`);
       const dataLancamentos = await resLancamentos.json();
       setLancamentosRecentes(dataLancamentos.lancamentos || []);
 
@@ -409,6 +409,37 @@ export default function Home() {
     }
   };
 
+  const excluirEmMassa = async () => {
+    if (selecionados.size === 0) return;
+
+    if (!confirm(`Tem certeza que deseja APAGAR ${selecionados.size} lançamento(s)? Esta ação não pode ser desfeita!`)) {
+      return;
+    }
+
+    setSalvandoEmMassa(true);
+    try {
+      const promises = Array.from(selecionados).map(id => {
+        return fetch(`/api/lancamentos/${id}`, {
+          method: 'DELETE',
+        });
+      });
+
+      await Promise.all(promises);
+
+      setEdicaoEmMassaAberta(false);
+      setSelecionados(new Set());
+      setEdicaoEmMassa({});
+      carregarDados();
+      setSucesso(`${selecionados.size} lançamento(s) apagado(s)!`);
+      setTimeout(() => setSucesso(''), 2000);
+    } catch (error) {
+      setErro('Erro ao apagar em massa');
+      console.error(error);
+    } finally {
+      setSalvandoEmMassa(false);
+    }
+  };
+
   // Helper para gráfico de pizza
   const getCoordinatesForPercent = (percent: number) => {
     const x = 60 + 50 * Math.cos(2 * Math.PI * percent - Math.PI / 2);
@@ -572,7 +603,7 @@ export default function Home() {
       )}
 
       {/* Widget de Orçamento - Sempre visível */}
-      <OrcamentoWidget />
+      <OrcamentoWidget mes={mesSelecionado} />
 
       {/* Fluxo de Caixa - Card Principal */}
       {resumo && (
@@ -1023,20 +1054,29 @@ export default function Home() {
                 />
               </div>
 
-              <div className="flex gap-2 pt-4">
+              <div className="space-y-2 pt-4">
+                <div className="flex gap-2">
+                  <button
+                    onClick={salvarEdicaoEmMassa}
+                    disabled={salvandoEmMassa}
+                    className="flex-1 bg-orange-500 hover:bg-orange-600 disabled:bg-[#1e2a4a] disabled:text-gray-500 text-white font-medium py-3 rounded-xl transition"
+                  >
+                    {salvandoEmMassa ? 'Salvando...' : 'Salvar Alterações'}
+                  </button>
+                  <button
+                    onClick={() => { setEdicaoEmMassaAberta(false); setEdicaoEmMassa({}); }}
+                    disabled={salvandoEmMassa}
+                    className="flex-1 border border-[#1e2a4a] hover:border-orange-500/50 disabled:border-[#1e2a4a] disabled:text-gray-500 text-white font-medium py-3 rounded-xl transition"
+                  >
+                    Cancelar
+                  </button>
+                </div>
                 <button
-                  onClick={salvarEdicaoEmMassa}
+                  onClick={excluirEmMassa}
                   disabled={salvandoEmMassa}
-                  className="flex-1 bg-orange-500 hover:bg-orange-600 disabled:bg-[#1e2a4a] disabled:text-gray-500 text-white font-medium py-3 rounded-xl transition"
+                  className="w-full bg-red-600 hover:bg-red-700 disabled:bg-[#1e2a4a] disabled:text-gray-500 text-white font-medium py-3 rounded-xl transition"
                 >
-                  {salvandoEmMassa ? 'Salvando...' : 'Salvar Alterações'}
-                </button>
-                <button
-                  onClick={() => { setEdicaoEmMassaAberta(false); setEdicaoEmMassa({}); }}
-                  disabled={salvandoEmMassa}
-                  className="flex-1 border border-[#1e2a4a] hover:border-orange-500/50 disabled:border-[#1e2a4a] disabled:text-gray-500 text-white font-medium py-3 rounded-xl transition"
-                >
-                  Cancelar
+                  🗑️ Apagar {selecionados.size} Selecionado(s)
                 </button>
               </div>
             </div>
