@@ -382,6 +382,11 @@ export default function Home() {
           </div>
         )}
       </div>
+
+      {/* Indicador de versão */}
+      <div className="fixed bottom-2 right-2 text-[10px] text-gray-600 bg-[#0f1629] px-2 py-1 rounded border border-[#1e2a4a]">
+        v3.0 • {new Date().toISOString().split('T')[0]}
+      </div>
     </main>
   );
 }
