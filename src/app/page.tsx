@@ -39,6 +39,12 @@ interface Top5Lancamento {
   data: string | Date;
 }
 
+interface Insight {
+  tipo: 'alerta' | 'positivo' | 'neutro';
+  icone: string;
+  mensagem: string;
+}
+
 export default function Home() {
   const [usuario, setUsuario] = useState<string | null>(null);
   const [texto, setTexto] = useState('');
@@ -48,6 +54,7 @@ export default function Home() {
   const [resumo, setResumo] = useState<Resumo | null>(null);
   const [categoriasResumo, setCategoriasResumo] = useState<CategoriaResumo[]>([]);
   const [top5Gastos, setTop5Gastos] = useState<Top5Lancamento[]>([]);
+  const [insights, setInsights] = useState<Insight[]>([]);
   const [mesSelecionado, setMesSelecionado] = useState(() => {
     const hoje = new Date();
     return `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;
@@ -66,8 +73,8 @@ export default function Home() {
 
   useEffect(() => {
     // Log de versão para debug
-    console.log('%c🚀 Nardotos Finance v3.3 - Mobile-First com FAB', 'color: #f97316; font-size: 14px; font-weight: bold');
-    console.log('%c✅ Botão flutuante, modal mobile, fluxo de caixa contínuo', 'color: #10b981; font-size: 12px');
+    console.log('%c🚀 Nardotos Finance v3.4 - FASE 2: Insights Automáticos', 'color: #f97316; font-size: 14px; font-weight: bold');
+    console.log('%c✅ Análises inteligentes, comparações mensais, alertas personalizados', 'color: #10b981; font-size: 12px');
 
     const usuarioSalvo = localStorage.getItem('usuario');
     if (!usuarioSalvo) {
@@ -117,6 +124,11 @@ export default function Home() {
       const dataCategorias = await resCategorias.json();
       setCategoriasResumo(dataCategorias.categorias || []);
       setTop5Gastos(dataCategorias.top5Lancamentos || []);
+
+      // Carregar insights automáticos
+      const resInsights = await fetch(`/api/insights?mes=${mesSelecionado}`);
+      const dataInsights = await resInsights.json();
+      setInsights(dataInsights.insights || []);
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
     }
@@ -417,6 +429,39 @@ export default function Home() {
         </div>
       )}
 
+      {/* Insights Automáticos */}
+      {insights.length > 0 && (
+        <div className="border border-blue-500/30 bg-gradient-to-br from-blue-900/20 to-purple-900/20 rounded-xl p-4 mb-6">
+          <h3 className="text-sm font-medium text-blue-400 mb-3 flex items-center gap-2">
+            <span>🤖</span> Insights Automáticos
+          </h3>
+          <div className="space-y-2">
+            {insights.map((insight, index) => {
+              let corTexto = 'text-gray-300';
+              let corBorda = 'border-gray-700';
+
+              if (insight.tipo === 'alerta') {
+                corTexto = 'text-yellow-300';
+                corBorda = 'border-yellow-500/30';
+              } else if (insight.tipo === 'positivo') {
+                corTexto = 'text-green-300';
+                corBorda = 'border-green-500/30';
+              }
+
+              return (
+                <div
+                  key={index}
+                  className={`flex items-start gap-2 p-2 rounded-lg border ${corBorda} bg-[#0f1629]/50`}
+                >
+                  <span className="text-lg">{insight.icone}</span>
+                  <p className={`text-sm ${corTexto} flex-1`}>{insight.mensagem}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Gráficos e Insights */}
       {categoriasResumo.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -670,7 +715,7 @@ export default function Home() {
 
       {/* Indicador de versão */}
       <div className="fixed bottom-2 left-2 text-[10px] text-gray-600 bg-[#0f1629] px-2 py-1 rounded border border-[#1e2a4a]">
-        v3.3 • {new Date().toISOString().split('T')[0]}
+        v3.4 • {new Date().toISOString().split('T')[0]}
       </div>
     </main>
   );
