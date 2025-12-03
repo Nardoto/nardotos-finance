@@ -10,16 +10,35 @@ export async function GET(request: NextRequest) {
 
     const lancamentosRef = db.collection('lancamentos');
     let snapshot;
+    let saldoAnterior = 0;
 
     if (mes) {
       const [ano, mesNum] = mes.split('-').map(Number);
       const inicio = new Date(ano, mesNum - 1, 1);
       const fim = new Date(ano, mesNum, 0, 23, 59, 59);
 
+      // Buscar lançamentos do mês atual
       snapshot = await lancamentosRef
         .where('data', '>=', Timestamp.fromDate(inicio))
         .where('data', '<=', Timestamp.fromDate(fim))
         .get();
+
+      // Calcular saldo anterior (todos os lançamentos ANTES do mês atual)
+      const snapshotAnterior = await lancamentosRef
+        .where('data', '<', Timestamp.fromDate(inicio))
+        .get();
+
+      snapshotAnterior.docs.forEach(doc => {
+        const data = doc.data();
+        const valor = data.valor || 0;
+        if (data.status === 'OK') {
+          if (data.tipo === 'RECEITA') {
+            saldoAnterior += valor;
+          } else {
+            saldoAnterior -= valor;
+          }
+        }
+      });
     } else {
       // Sem filtro de mês - retorna TODOS os lançamentos
       snapshot = await lancamentosRef.get();
@@ -68,6 +87,8 @@ export async function GET(request: NextRequest) {
       totalReceitas,
       totalDespesas,
       saldo: totalReceitas - totalDespesas,
+      saldoAnterior,
+      saldoFinal: saldoAnterior + (totalReceitas - totalDespesas),
       totalPendente,
       totalLancamentos: snapshot.size,
       porCategoria: categoriasOrdenadas,

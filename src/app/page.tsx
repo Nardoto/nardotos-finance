@@ -20,6 +20,8 @@ interface Resumo {
   totalReceitas: number;
   totalDespesas: number;
   saldo: number;
+  saldoAnterior: number;
+  saldoFinal: number;
 }
 
 interface CategoriaResumo {
@@ -351,18 +353,63 @@ export default function Home() {
         </button>
       </div>
 
-      {/* Seletor de Mês */}
-      <div className="flex items-center justify-center gap-4 mb-6">
-        <button onClick={() => mudarMes(-1)} className="text-gray-400 hover:text-orange-400 text-2xl px-2 transition">&lt;</button>
-        <h2 className="font-bold text-lg min-w-[180px] text-center text-white">{getNomeMes(mesSelecionado)}</h2>
-        <button onClick={() => mudarMes(1)} className="text-gray-400 hover:text-orange-400 text-2xl px-2 transition">&gt;</button>
+      {/* Seletor de Mês - Melhorado */}
+      <div className="flex items-center justify-center gap-3 mb-6">
+        <button
+          onClick={() => mudarMes(-1)}
+          className="bg-[#151d32] border border-[#1e2a4a] hover:border-orange-500 text-white px-4 py-2 rounded-lg transition flex items-center gap-2 hover:bg-[#1e2a4a]"
+        >
+          <span className="text-xl">←</span> Anterior
+        </button>
+        <div className="bg-gradient-to-r from-orange-600 to-orange-500 px-6 py-2 rounded-lg">
+          <h2 className="font-bold text-lg text-white text-center min-w-[150px]">{getNomeMes(mesSelecionado)}</h2>
+        </div>
+        <button
+          onClick={() => mudarMes(1)}
+          className="bg-[#151d32] border border-[#1e2a4a] hover:border-orange-500 text-white px-4 py-2 rounded-lg transition flex items-center gap-2 hover:bg-[#1e2a4a]"
+        >
+          Próximo <span className="text-xl">→</span>
+        </button>
       </div>
+
+      {/* Fluxo de Caixa - Card Principal */}
+      {resumo && (
+        <div className="border-2 border-orange-500 rounded-xl p-4 mb-6 bg-gradient-to-br from-[#151d32] to-[#0f1629]">
+          <h3 className="text-sm font-medium text-orange-400 mb-3 flex items-center gap-2">
+            <span>💰</span> Fluxo de Caixa
+          </h3>
+          <div className="space-y-2">
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-gray-400">Saldo Anterior</span>
+              <span className={`font-bold ${resumo.saldoAnterior >= 0 ? 'text-blue-400' : 'text-red-400'}`}>
+                {formatarValor(resumo.saldoAnterior)}
+              </span>
+            </div>
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-gray-400">+ Receitas {getNomeMes(mesSelecionado).split(' ')[0]}</span>
+              <span className="font-bold text-green-400">+{formatarValor(resumo.totalReceitas)}</span>
+            </div>
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-gray-400">- Despesas {getNomeMes(mesSelecionado).split(' ')[0]}</span>
+              <span className="font-bold text-red-400">-{formatarValor(resumo.totalDespesas)}</span>
+            </div>
+            <div className="border-t border-[#1e2a4a] pt-2 mt-2">
+              <div className="flex justify-between items-center">
+                <span className="text-white font-medium">= Saldo Atual</span>
+                <span className={`text-2xl font-bold ${resumo.saldoFinal >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                  {formatarValor(resumo.saldoFinal)}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {resumo && (
         <div className="grid grid-cols-3 gap-3 mb-6">
           <div className="border border-[#1e2a4a] rounded-xl p-3 text-center bg-[#151d32]"><p className="text-xs text-gray-500">Receitas</p><p className="text-lg font-bold text-green-400">{formatarValor(resumo.totalReceitas)}</p></div>
           <div className="border border-[#1e2a4a] rounded-xl p-3 text-center bg-[#151d32]"><p className="text-xs text-gray-500">Despesas</p><p className="text-lg font-bold text-red-400">{formatarValor(resumo.totalDespesas)}</p></div>
-          <div className="border border-[#1e2a4a] rounded-xl p-3 text-center bg-[#151d32]"><p className="text-xs text-gray-500">Saldo</p><p className={"text-lg font-bold " + (resumo.saldo >= 0 ? 'text-green-400' : 'text-red-400')}>{formatarValor(resumo.saldo)}</p></div>
+          <div className="border border-[#1e2a4a] rounded-xl p-3 text-center bg-[#151d32]"><p className="text-xs text-gray-500">Saldo Mês</p><p className={"text-lg font-bold " + (resumo.saldo >= 0 ? 'text-green-400' : 'text-red-400')}>{formatarValor(resumo.saldo)}</p></div>
         </div>
       )}
 
