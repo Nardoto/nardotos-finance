@@ -1,6 +1,15 @@
 import { NextResponse } from 'next/server';
 import { getAdminDb } from '@/lib/firebase-admin';
 
+interface Lancamento {
+  id: string;
+  tipo: 'RECEITA' | 'DESPESA';
+  valor: number;
+  categoria: string;
+  data: Date;
+  [key: string]: any;
+}
+
 export async function GET() {
   try {
     const db = getAdminDb();
@@ -9,13 +18,13 @@ export async function GET() {
 
     // Buscar todos os lançamentos de uma vez (muito mais rápido)
     const lancamentosSnapshot = await db.collection('lancamentos').get();
-    const lancamentos = lancamentosSnapshot.docs.map(doc => {
+    const lancamentos: Lancamento[] = lancamentosSnapshot.docs.map(doc => {
       const data = doc.data();
       return {
         ...data,
         id: doc.id,
         data: data.data?.toDate ? data.data.toDate() : new Date(data.data) // Converter Timestamp para Date
-      };
+      } as Lancamento;
     });
 
     // Agrupar lançamentos por mês (TODOS os meses com lançamentos, não apenas últimos 6)
