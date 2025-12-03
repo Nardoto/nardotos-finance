@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import ThemeToggle from '@/components/ThemeToggle';
+import OrcamentoWidget from '@/components/OrcamentoWidget';
 
 interface CategoriaInfo {
   nome: string;
@@ -182,6 +183,9 @@ export default function Categorias() {
           Categorias
         </button>
       </div>
+
+      {/* Widget de Orçamento */}
+      <OrcamentoWidget />
 
       <h2 className="font-bold text-lg mb-4">Gerenciar Categorias</h2>
 

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import ThemeToggle from '@/components/ThemeToggle';
+import OrcamentoWidget from '@/components/OrcamentoWidget';
 
 interface ContaFutura {
   id?: string;
@@ -219,6 +220,9 @@ export default function Planejamento() {
           Categorias
         </button>
       </div>
+
+      {/* Widget de Orçamento */}
+      <OrcamentoWidget mes={mesSelecionado} />
 
       {/* Seletor de Mes */}
       <div className="flex items-center justify-between mb-6">

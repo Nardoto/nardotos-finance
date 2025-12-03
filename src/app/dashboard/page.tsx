@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import ThemeToggle from '@/components/ThemeToggle';
+import OrcamentoWidget from '@/components/OrcamentoWidget';
 
 interface DadosMes {
   mes: string;
@@ -109,6 +110,9 @@ export default function Dashboard() {
           Categorias
         </button>
       </div>
+
+      {/* Widget de Orçamento */}
+      <OrcamentoWidget />
 
       {carregando ? (
         <div className="flex justify-center py-12">

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 interface Orcamento {
   id?: string;
@@ -12,8 +12,14 @@ interface Orcamento {
 }
 
 export default function OrcamentoPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [usuario, setUsuario] = useState<string | null>(null);
   const [mesSelecionado, setMesSelecionado] = useState(() => {
+    // Ler mês da URL primeiro, senão usa o mês atual
+    const mesUrl = searchParams.get('mes');
+    if (mesUrl) return mesUrl;
+
     const hoje = new Date();
     return `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;
   });
@@ -24,7 +30,6 @@ export default function OrcamentoPage() {
   const [salvando, setSalvando] = useState(false);
   const [sucesso, setSucesso] = useState('');
   const [erro, setErro] = useState('');
-  const router = useRouter();
 
   const CATEGORIAS_SUGERIDAS = [
     'ALIMENTACAO', 'GASOLINA', 'EDUCACAO', 'LAZER', 'SAUDE',
