@@ -786,6 +786,11 @@ export default function Home() {
                     </div>
                     <input value={lancamentoEdit?.categoria} onChange={(e) => setLancamentoEdit(prev => prev ? {...prev, categoria: e.target.value.toUpperCase()} : null)} className="w-full bg-[#0f1629] border border-[#1e2a4a] rounded-xl p-2 text-white" placeholder="Categoria" />
                     <input value={lancamentoEdit?.descricao} onChange={(e) => setLancamentoEdit(prev => prev ? {...prev, descricao: e.target.value} : null)} className="w-full bg-[#0f1629] border border-[#1e2a4a] rounded-xl p-2 text-white" placeholder="Descricao" />
+                    <select value={lancamentoEdit?.conta || 'THARCISIO'} onChange={(e) => setLancamentoEdit(prev => prev ? {...prev, conta: e.target.value as 'EMPRESA' | 'THARCISIO' | 'ESPOSA'} : null)} className="w-full bg-[#0f1629] border border-[#1e2a4a] rounded-xl p-2 text-white">
+                      <option value="THARCISIO">👤 Tharcisio</option>
+                      <option value="ESPOSA">👥 Tamires</option>
+                      <option value="EMPRESA">🏢 Empresa</option>
+                    </select>
                     <div className="flex gap-2">
                       <button onClick={salvarEdicao} className="flex-1 bg-orange-500 text-white py-2 rounded-xl">Salvar</button>
                       <button onClick={() => { setEditando(null); setLancamentoEdit(null); }} className="flex-1 border border-[#1e2a4a] text-white py-2 rounded-xl">Cancelar</button>
@@ -797,6 +802,11 @@ export default function Home() {
                       <p className={"font-medium " + (l.tipo === 'RECEITA' ? 'text-green-400' : 'text-red-400')}>{l.tipo === 'RECEITA' ? '+' : '-'}{formatarValor(l.valor)}</p>
                       <p className="text-sm text-gray-400">{l.categoria}</p>
                       {l.descricao && <p className="text-xs text-gray-500">{l.descricao}</p>}
+                      {l.conta && (
+                        <p className="text-[10px] text-gray-600 mt-1">
+                          {l.conta === 'EMPRESA' ? '🏢 Empresa' : l.conta === 'ESPOSA' ? '👥 Tamires' : '👤 Tharcisio'}
+                        </p>
+                      )}
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="text-right">
