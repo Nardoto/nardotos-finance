@@ -46,6 +46,14 @@ interface Insight {
   mensagem: string;
 }
 
+interface Orcamento {
+  id?: string;
+  usuario: string;
+  mes: string;
+  orcamentoGlobal?: number;
+  categorias: Record<string, number>;
+}
+
 export default function Home() {
   const [usuario, setUsuario] = useState<string | null>(null);
   const [texto, setTexto] = useState('');
@@ -56,6 +64,7 @@ export default function Home() {
   const [categoriasResumo, setCategoriasResumo] = useState<CategoriaResumo[]>([]);
   const [top5Gastos, setTop5Gastos] = useState<Top5Lancamento[]>([]);
   const [insights, setInsights] = useState<Insight[]>([]);
+  const [orcamento, setOrcamento] = useState<Orcamento | null>(null);
   const [contaSelecionada, setContaSelecionada] = useState<'TODAS' | 'EMPRESA' | 'THARCISIO' | 'ESPOSA'>('TODAS');
   const [mesSelecionado, setMesSelecionado] = useState(() => {
     const hoje = new Date();
@@ -75,8 +84,8 @@ export default function Home() {
 
   useEffect(() => {
     // Log de versão para debug
-    console.log('%c🚀 Nardotos Finance v3.5 - Multi-Conta: Empresa, Pessoal e Esposa', 'color: #f97316; font-size: 14px; font-weight: bold');
-    console.log('%c✅ Análises inteligentes, comparações mensais, alertas personalizados', 'color: #10b981; font-size: 12px');
+    console.log('%c🚀 Nardotos Finance v3.6 - FASE 3: Orçamento e Metas', 'color: #f97316; font-size: 14px; font-weight: bold');
+    console.log('%c💰 Controle de gastos por categoria, barras de progresso visuais', 'color: #10b981; font-size: 12px');
 
     const usuarioSalvo = localStorage.getItem('usuario');
     if (!usuarioSalvo) {
@@ -133,6 +142,13 @@ export default function Home() {
       const resInsights = await fetch(`/api/insights?mes=${mesSelecionado}${contaParam}`);
       const dataInsights = await resInsights.json();
       setInsights(dataInsights.insights || []);
+
+      // Carregar orçamento do mês
+      if (usuario) {
+        const resOrcamento = await fetch(`/api/orcamento?usuario=${usuario}&mes=${mesSelecionado}`);
+        const dataOrcamento = await resOrcamento.json();
+        setOrcamento(dataOrcamento.orcamento || null);
+      }
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
     }
@@ -358,17 +374,20 @@ export default function Home() {
       </header>
 
       {/* Navegação com abas */}
-      <div className="flex border-b border-[#1e2a4a] mb-6">
-        <button className="px-4 py-2 text-orange-500 border-b-2 border-orange-500 font-medium">
+      <div className="flex border-b border-[#1e2a4a] mb-6 overflow-x-auto">
+        <button className="px-4 py-2 text-orange-500 border-b-2 border-orange-500 font-medium whitespace-nowrap">
           Lançamentos
         </button>
-        <button onClick={() => router.push('/dashboard')} className="px-4 py-2 text-gray-500 hover:text-orange-400 border-b-2 border-transparent">
+        <button onClick={() => router.push('/dashboard')} className="px-4 py-2 text-gray-500 hover:text-orange-400 border-b-2 border-transparent whitespace-nowrap">
           Dashboard
         </button>
-        <button onClick={() => router.push('/planejamento')} className="px-4 py-2 text-gray-500 hover:text-orange-400 border-b-2 border-transparent">
+        <button onClick={() => router.push('/orcamento')} className="px-4 py-2 text-gray-500 hover:text-orange-400 border-b-2 border-transparent whitespace-nowrap">
+          💰 Orçamento
+        </button>
+        <button onClick={() => router.push('/planejamento')} className="px-4 py-2 text-gray-500 hover:text-orange-400 border-b-2 border-transparent whitespace-nowrap">
           Planejar
         </button>
-        <button onClick={() => router.push('/categorias')} className="px-4 py-2 text-gray-500 hover:text-orange-400 border-b-2 border-transparent">
+        <button onClick={() => router.push('/categorias')} className="px-4 py-2 text-gray-500 hover:text-orange-400 border-b-2 border-transparent whitespace-nowrap">
           Categorias
         </button>
       </div>
@@ -551,6 +570,49 @@ export default function Home() {
                 })}
               </div>
             </div>
+
+            {/* Barras de Progresso de Orçamento */}
+            {orcamento && Object.keys(orcamento.categorias).length > 0 && (
+              <div className="mt-4 pt-4 border-t border-[#1e2a4a]">
+                <h4 className="text-[10px] text-gray-500 mb-2 uppercase">Orçamento vs Gasto</h4>
+                <div className="space-y-2">
+                  {categoriasResumo.filter(c => orcamento.categorias[c.categoria]).map(cat => {
+                    const limite = orcamento.categorias[cat.categoria];
+                    const percentual = (cat.total / limite) * 100;
+                    let corBarra = '#10b981'; // verde
+                    let corTexto = 'text-green-400';
+
+                    if (percentual >= 100) {
+                      corBarra = '#ef4444'; // vermelho
+                      corTexto = 'text-red-400';
+                    } else if (percentual >= 80) {
+                      corBarra = '#f59e0b'; // amarelo
+                      corTexto = 'text-yellow-400';
+                    }
+
+                    return (
+                      <div key={cat.categoria}>
+                        <div className="flex items-center justify-between text-[10px] mb-1">
+                          <span className="text-gray-500">{cat.categoria}</span>
+                          <span className={`font-medium ${corTexto}`}>
+                            {formatarValor(cat.total)} / {formatarValor(limite)}
+                          </span>
+                        </div>
+                        <div className="h-2 bg-[#0f1629] rounded-full overflow-hidden">
+                          <div
+                            className="h-full transition-all duration-500 rounded-full"
+                            style={{
+                              width: `${Math.min(percentual, 100)}%`,
+                              backgroundColor: corBarra
+                            }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Top 5 Maiores Gastos */}
@@ -756,7 +818,7 @@ export default function Home() {
 
       {/* Indicador de versão */}
       <div className="fixed bottom-2 left-2 text-[10px] text-gray-600 bg-[#0f1629] px-2 py-1 rounded border border-[#1e2a4a]">
-        v3.5.1 • {new Date().toISOString().split('T')[0]}
+        v3.6 • {new Date().toISOString().split('T')[0]}
       </div>
     </main>
   );
