@@ -1,0 +1,34 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(tree:*)",
+      "Bash(npm run dev:*)",
+      "Bash(tasklist /fi \"imagename eq node.exe\")",
+      "Bash(findstr:*)",
+      "Bash(tasklist /fi 'imagename eq node.exe')",
+      "Bash(if exist .next rmdir /s /q .next)",
+      "Bash(netstat:*)",
+      "Bash(taskkill:*)",
+      "Bash(git restore:*)",
+      "Bash(del /f srccomponentsLayout.tsx)",
+      "Bash(rd /s /q .next)",
+      "Bash(rm:*)",
+      "Bash(Get-Process node -ErrorAction SilentlyContinue)",
+      "Bash(Stop-Process -Force -ErrorAction SilentlyContinue)",
+      "Bash(Remove-Item -Force -ErrorAction SilentlyContinue .next/dev/lock)",
+      "Bash(Start-Sleep -Seconds 2)",
+      "Bash(timeout /t 5 /nobreak)",
+      "Bash(powershell -Command \"Get-Process node -ErrorAction SilentlyContinue | Stop-Process -Force; Start-Sleep -Seconds 3; Remove-Item -Recurse -Force .next -ErrorAction SilentlyContinue; npm run dev\")",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nfix: Show all transactions instead of current month only\n\n- Remove automatic month filter from summary API (now shows all time by default)\n- Fix formatarValor to handle undefined values safely with (valor || 0)\n- Transactions list and summary cards now display complete history\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git push:*)",
+      "Bash(curl:*)",
+      "Bash(python:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nfix: Dashboard shows all months with transactions continuously\n\n- Fix Firestore Timestamp conversion in dashboard API\n- Show ALL months with transactions instead of only last 6 months\n- Group transactions by month dynamically\n- Cards now display cumulative totals across all months\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git commit -m \"$(cat <<''EOF''\nfix: Remove duplicate orderBy to avoid Firestore index requirement\n\n- Remove orderBy(''criadoEm'') from month-filtered query\n- Fixes 500 error: \"The query requires an index\"\n- Single orderBy(''data'') is sufficient for date-based queries\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git commit:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

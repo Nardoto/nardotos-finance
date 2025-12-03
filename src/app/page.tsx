@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import ThemeToggle from '@/components/ThemeToggle';
+import OrcamentoWidget from '@/components/OrcamentoWidget';
 
 interface Lancamento {
   id?: string;
@@ -536,63 +537,42 @@ export default function Home() {
         </button>
       </div>
 
-      {/* Filtro de Categoria */}
+      {/* Filtro de Categoria - Botões */}
       {categoriasResumo.length > 0 && (
-        <div className="flex items-center justify-center gap-2 mb-6">
-          <span className="text-[10px] text-gray-600">Categoria:</span>
-          <select
-            value={categoriaSelecionada}
-            onChange={(e) => setCategoriaSelecionada(e.target.value)}
-            className="bg-[#151d32] border border-[#1e2a4a] hover:border-orange-500 text-white text-xs px-3 py-1.5 rounded-lg transition focus:outline-none focus:border-orange-500"
-          >
-            <option value="TODAS">Todas</option>
-            {categoriasResumo.map(cat => (
-              <option key={cat.categoria} value={cat.categoria}>
-                {cat.categoria} ({cat.percentual.toFixed(0)}% - {(cat.total || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })})
-              </option>
+        <div className="mb-6">
+          <div className="flex items-center justify-center gap-1 mb-2">
+            <span className="text-[10px] text-gray-600 mr-1">Categoria:</span>
+            <button
+              onClick={() => setCategoriaSelecionada('TODAS')}
+              className={`px-2 py-1 rounded text-[10px] transition ${
+                categoriaSelecionada === 'TODAS'
+                  ? 'bg-orange-500/20 text-orange-400 border border-orange-500/50'
+                  : 'text-gray-600 hover:text-gray-400'
+              }`}
+            >
+              Todas
+            </button>
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-1">
+            {categoriasResumo.slice(0, 8).map(cat => (
+              <button
+                key={cat.categoria}
+                onClick={() => setCategoriaSelecionada(cat.categoria)}
+                className={`px-2 py-1 rounded text-[10px] transition ${
+                  categoriaSelecionada === cat.categoria
+                    ? 'bg-orange-500/20 text-orange-400 border border-orange-500/50'
+                    : 'bg-[#151d32] border border-[#1e2a4a] text-gray-400 hover:border-orange-500/50 hover:text-orange-400'
+                }`}
+              >
+                {cat.categoria}
+              </button>
             ))}
-          </select>
+          </div>
         </div>
       )}
 
-      {/* Alertas de Orçamento */}
-      {orcamento && Object.keys(orcamento.categorias).length > 0 && (() => {
-        const alertas = categoriasResumo
-          .filter(c => orcamento.categorias[c.categoria])
-          .map(c => ({
-            categoria: c.categoria,
-            percentual: (c.total / orcamento.categorias[c.categoria]) * 100,
-            gasto: c.total,
-            limite: orcamento.categorias[c.categoria]
-          }))
-          .filter(a => a.percentual >= 80)
-          .sort((a, b) => b.percentual - a.percentual);
-
-        if (alertas.length > 0) {
-          return (
-            <div className="border border-yellow-500/50 bg-gradient-to-br from-yellow-900/20 to-orange-900/20 rounded-xl p-4 mb-6">
-              <h3 className="text-sm font-medium text-yellow-400 mb-3 flex items-center gap-2">
-                <span>⚠️</span> Alertas de Orçamento
-              </h3>
-              <div className="space-y-2">
-                {alertas.map(alerta => {
-                  const corTexto = alerta.percentual >= 100 ? 'text-red-400' : 'text-yellow-400';
-                  const icone = alerta.percentual >= 100 ? '🔴' : '🟡';
-                  return (
-                    <div key={alerta.categoria} className="text-sm">
-                      <span className={corTexto}>{icone} {alerta.categoria}:</span>{' '}
-                      <span className="text-white font-medium">{alerta.percentual.toFixed(0)}%</span>{' '}
-                      <span className="text-gray-400 text-xs">
-                        ({(alerta.gasto || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} / {(alerta.limite || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })})
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        }
-      })()}
+      {/* Widget de Orçamento - Sempre visível */}
+      <OrcamentoWidget />
 
       {/* Fluxo de Caixa - Card Principal */}
       {resumo && (
