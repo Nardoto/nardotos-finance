@@ -28,7 +28,7 @@ export async function GET() {
     });
 
     // Agrupar lançamentos por mês (TODOS os meses com lançamentos, não apenas últimos 6)
-    const lancamentosPorMes = new Map();
+    const lancamentosPorMes = new Map<string, Lancamento[]>();
 
     lancamentos.forEach(l => {
       const dataLanc = new Date(l.data);
@@ -36,7 +36,7 @@ export async function GET() {
       if (!lancamentosPorMes.has(mesAno)) {
         lancamentosPorMes.set(mesAno, []);
       }
-      lancamentosPorMes.get(mesAno).push(l);
+      lancamentosPorMes.get(mesAno)!.push(l);
     });
 
     // Ordenar meses e processar
@@ -48,7 +48,7 @@ export async function GET() {
       const nomeMes = data.toLocaleDateString('pt-BR', { month: 'short' });
 
       // Pegar lançamentos do mês do Map
-      const lancamentosDoMes = lancamentosPorMes.get(mesAno) || [];
+      const lancamentosDoMes: Lancamento[] = lancamentosPorMes.get(mesAno) || [];
 
       // Calcular totais
       const totalReceitas = lancamentosDoMes
