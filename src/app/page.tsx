@@ -392,47 +392,48 @@ export default function Home() {
         </button>
       </div>
 
-      {/* Filtro de Contas */}
-      <div className="flex items-center justify-center gap-2 mb-6 overflow-x-auto">
+      {/* Filtro de Contas - Discreto */}
+      <div className="flex items-center justify-center gap-1 mb-4">
+        <span className="text-[10px] text-gray-600 mr-1">Conta:</span>
         <button
           onClick={() => setContaSelecionada('TODAS')}
-          className={`px-4 py-2 rounded-lg transition flex items-center gap-2 whitespace-nowrap ${
+          className={`px-2 py-1 rounded text-[10px] transition ${
             contaSelecionada === 'TODAS'
-              ? 'bg-orange-500 text-white'
-              : 'bg-[#151d32] border border-[#1e2a4a] text-gray-400 hover:border-orange-500/50'
+              ? 'bg-orange-500/20 text-orange-400 border border-orange-500/50'
+              : 'text-gray-600 hover:text-gray-400'
           }`}
         >
-          📊 Todas
+          Todas
         </button>
         <button
           onClick={() => setContaSelecionada('EMPRESA')}
-          className={`px-4 py-2 rounded-lg transition flex items-center gap-2 whitespace-nowrap ${
+          className={`px-2 py-1 rounded text-[10px] transition ${
             contaSelecionada === 'EMPRESA'
-              ? 'bg-orange-500 text-white'
-              : 'bg-[#151d32] border border-[#1e2a4a] text-gray-400 hover:border-orange-500/50'
+              ? 'bg-orange-500/20 text-orange-400 border border-orange-500/50'
+              : 'text-gray-600 hover:text-gray-400'
           }`}
         >
-          🏢 Empresa
+          Empresa
         </button>
         <button
           onClick={() => setContaSelecionada('THARCISIO')}
-          className={`px-4 py-2 rounded-lg transition flex items-center gap-2 whitespace-nowrap ${
+          className={`px-2 py-1 rounded text-[10px] transition ${
             contaSelecionada === 'THARCISIO'
-              ? 'bg-orange-500 text-white'
-              : 'bg-[#151d32] border border-[#1e2a4a] text-gray-400 hover:border-orange-500/50'
+              ? 'bg-orange-500/20 text-orange-400 border border-orange-500/50'
+              : 'text-gray-600 hover:text-gray-400'
           }`}
         >
-          👤 Você
+          Tharcisio
         </button>
         <button
           onClick={() => setContaSelecionada('ESPOSA')}
-          className={`px-4 py-2 rounded-lg transition flex items-center gap-2 whitespace-nowrap ${
+          className={`px-2 py-1 rounded text-[10px] transition ${
             contaSelecionada === 'ESPOSA'
-              ? 'bg-orange-500 text-white'
-              : 'bg-[#151d32] border border-[#1e2a4a] text-gray-400 hover:border-orange-500/50'
+              ? 'bg-orange-500/20 text-orange-400 border border-orange-500/50'
+              : 'text-gray-600 hover:text-gray-400'
           }`}
         >
-          👥 Esposa
+          Tamires
         </button>
       </div>
 
@@ -466,14 +467,6 @@ export default function Home() {
               </div>
             </div>
           </div>
-        </div>
-      )}
-
-      {resumo && (
-        <div className="grid grid-cols-3 gap-3 mb-6">
-          <div className="border border-[#1e2a4a] rounded-xl p-3 text-center bg-[#151d32]"><p className="text-xs text-gray-500">Receitas</p><p className="text-lg font-bold text-green-400">{formatarValor(resumo.totalReceitas)}</p></div>
-          <div className="border border-[#1e2a4a] rounded-xl p-3 text-center bg-[#151d32]"><p className="text-xs text-gray-500">Despesas</p><p className="text-lg font-bold text-red-400">{formatarValor(resumo.totalDespesas)}</p></div>
-          <div className="border border-[#1e2a4a] rounded-xl p-3 text-center bg-[#151d32]"><p className="text-xs text-gray-500">Saldo Mês</p><p className={"text-lg font-bold " + (resumo.saldo >= 0 ? 'text-green-400' : 'text-red-400')}>{formatarValor(resumo.saldo)}</p></div>
         </div>
       )}
 
@@ -763,7 +756,7 @@ export default function Home() {
 
       {/* Indicador de versão */}
       <div className="fixed bottom-2 left-2 text-[10px] text-gray-600 bg-[#0f1629] px-2 py-1 rounded border border-[#1e2a4a]">
-        v3.4 • {new Date().toISOString().split('T')[0]}
+        v3.5.1 • {new Date().toISOString().split('T')[0]}
       </div>
     </main>
   );
