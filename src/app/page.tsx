@@ -60,13 +60,14 @@ export default function Home() {
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [deletando, setDeletando] = useState(false);
   const [salvandoEdicao, setSalvandoEdicao] = useState(false);
+  const [modalAberto, setModalAberto] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
   useEffect(() => {
     // Log de versão para debug
-    console.log('%c🚀 Nardotos Finance v3.2 - FASE 1 Corrigida', 'color: #f97316; font-size: 14px; font-weight: bold');
-    console.log('%c✅ Seletor de mês, filtro de DESPESAS, cores contrastantes, comparação visual', 'color: #10b981; font-size: 12px');
+    console.log('%c🚀 Nardotos Finance v3.3 - Mobile-First com FAB', 'color: #f97316; font-size: 14px; font-weight: bold');
+    console.log('%c✅ Botão flutuante, modal mobile, fluxo de caixa contínuo', 'color: #10b981; font-size: 12px');
 
     const usuarioSalvo = localStorage.getItem('usuario');
     if (!usuarioSalvo) {
@@ -150,6 +151,7 @@ export default function Home() {
       } else {
         setSucesso('Salvo!');
         setTexto('');
+        setModalAberto(false);
         carregarDados();
         setTimeout(() => setSucesso(''), 2000);
       }
@@ -192,6 +194,7 @@ export default function Home() {
           setErro(dataSalvar.error);
         } else {
           setSucesso(dataSalvar.salvos.length + ' lancamento(s) do CSV salvo(s)! (Custo de texto)');
+          setModalAberto(false);
           carregarDados();
           setTimeout(() => setSucesso(''), 3000);
         }
@@ -236,6 +239,7 @@ export default function Home() {
           setErro(dataSalvar.error);
         } else {
           setSucesso(dataSalvar.salvos.length + ' lancamento(s) salvo(s)! (Alto custo - use CSV)');
+          setModalAberto(false);
           carregarDados();
           setTimeout(() => setSucesso(''), 3000);
         }
@@ -538,15 +542,58 @@ export default function Home() {
         </div>
       )}
 
-      <div className="border border-[#1e2a4a] rounded-xl p-4 mb-6 bg-[#151d32]">
-        <textarea value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Ex: Gastei 45 no mercado" className="w-full bg-[#0f1629] border border-[#1e2a4a] rounded-xl p-3 text-white placeholder-gray-500 resize-none focus:outline-none focus:border-orange-500/50" rows={2} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviarLancamento(); } }} />
-        <div className="flex gap-2 mt-3">
-          <button onClick={enviarLancamento} disabled={processando || !texto.trim()} className="flex-1 bg-orange-500 hover:bg-orange-600 disabled:bg-[#1e2a4a] disabled:text-gray-500 text-white font-medium py-2 px-4 rounded-xl transition">{processando ? 'Salvando...' : 'Enviar'}</button>
-          <button onClick={() => fileInputRef.current?.click()} disabled={processando} className="border border-[#1e2a4a] hover:border-orange-500/50 disabled:border-[#1e2a4a] disabled:text-gray-500 text-white font-medium py-2 px-4 rounded-xl transition" title="CSV = barato | Foto = 20x mais caro">Extrato CSV/Foto</button>
-          <input ref={fileInputRef} type="file" accept=".csv,image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) processarArquivo(file); }} />
+      {/* Botão Flutuante (FAB) para Mobile */}
+      <button
+        onClick={() => setModalAberto(true)}
+        className="fixed bottom-6 right-6 w-16 h-16 bg-gradient-to-r from-orange-600 to-orange-500 rounded-full shadow-lg flex items-center justify-center text-white text-3xl font-bold hover:scale-110 transition-transform z-40"
+        title="Adicionar lançamento"
+      >
+        +
+      </button>
+
+      {/* Modal de Lançamento */}
+      {modalAberto && (
+        <div className="fixed inset-0 bg-black/80 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+          <div className="bg-[#151d32] border-t sm:border border-[#1e2a4a] rounded-t-3xl sm:rounded-xl p-6 w-full sm:max-w-md sm:w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-white">Novo Lançamento</h3>
+              <button onClick={() => setModalAberto(false)} className="text-gray-400 hover:text-white text-2xl">&times;</button>
+            </div>
+
+            <textarea
+              value={texto}
+              onChange={(e) => setTexto(e.target.value)}
+              placeholder="Ex: Gastei 45 no mercado"
+              className="w-full bg-[#0f1629] border border-[#1e2a4a] rounded-xl p-3 text-white placeholder-gray-500 resize-none focus:outline-none focus:border-orange-500/50 mb-3"
+              rows={3}
+              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviarLancamento(); } }}
+              autoFocus
+            />
+
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={enviarLancamento}
+                disabled={processando || !texto.trim()}
+                className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-[#1e2a4a] disabled:text-gray-500 text-white font-medium py-3 px-4 rounded-xl transition"
+              >
+                {processando ? 'Salvando...' : 'Enviar'}
+              </button>
+
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={processando}
+                className="w-full border border-[#1e2a4a] hover:border-orange-500/50 disabled:border-[#1e2a4a] disabled:text-gray-500 text-white font-medium py-3 px-4 rounded-xl transition"
+              >
+                📎 Importar CSV/Foto
+              </button>
+
+              <input ref={fileInputRef} type="file" accept=".csv,image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) processarArquivo(file); }} />
+            </div>
+
+            <p className="text-xs text-gray-500 mt-3 text-center">💡 Use CSV do banco (grátis) ao invés de foto (20x mais caro)</p>
+          </div>
         </div>
-        <p className="text-xs text-gray-500 mt-2 text-center">Use CSV do banco (gratis) ao inves de foto (20x mais caro)</p>
-      </div>
+      )}
 
       {erro && <div className="border border-red-800 text-red-400 rounded-lg p-3 mb-4">{erro}</div>}
       {sucesso && <div className="border border-green-800 text-green-400 rounded-lg p-3 mb-4">{sucesso}</div>}
@@ -622,8 +669,8 @@ export default function Home() {
       </div>
 
       {/* Indicador de versão */}
-      <div className="fixed bottom-2 right-2 text-[10px] text-gray-600 bg-[#0f1629] px-2 py-1 rounded border border-[#1e2a4a]">
-        v3.2 • {new Date().toISOString().split('T')[0]}
+      <div className="fixed bottom-2 left-2 text-[10px] text-gray-600 bg-[#0f1629] px-2 py-1 rounded border border-[#1e2a4a]">
+        v3.3 • {new Date().toISOString().split('T')[0]}
       </div>
     </main>
   );
