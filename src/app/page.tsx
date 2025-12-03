@@ -22,6 +22,21 @@ interface Resumo {
   saldo: number;
 }
 
+interface CategoriaResumo {
+  categoria: string;
+  total: number;
+  quantidade: number;
+  percentual: number;
+}
+
+interface Top5Lancamento {
+  id: string;
+  valor: number;
+  categoria: string;
+  descricao: string;
+  data: string | Date;
+}
+
 export default function Home() {
   const [usuario, setUsuario] = useState<string | null>(null);
   const [texto, setTexto] = useState('');
@@ -29,6 +44,8 @@ export default function Home() {
   const [lancamentosRecentes, setLancamentosRecentes] = useState<Lancamento[]>([]);
   const [lancamentosFiltrados, setLancamentosFiltrados] = useState<Lancamento[]>([]);
   const [resumo, setResumo] = useState<Resumo | null>(null);
+  const [categoriasResumo, setCategoriasResumo] = useState<CategoriaResumo[]>([]);
+  const [top5Gastos, setTop5Gastos] = useState<Top5Lancamento[]>([]);
   const [erro, setErro] = useState('');
   const [sucesso, setSucesso] = useState('');
   const [editando, setEditando] = useState<string | null>(null);
@@ -42,8 +59,8 @@ export default function Home() {
 
   useEffect(() => {
     // Log de versão para debug
-    console.log('%c🚀 Nardotos Finance v3.0 - Build: 2025-12-02 21:15', 'color: #f97316; font-size: 14px; font-weight: bold');
-    console.log('%c✅ Correções aplicadas: API resumo, dashboard e lançamentos', 'color: #10b981; font-size: 12px');
+    console.log('%c🚀 Nardotos Finance v3.1 - FASE 1: Dashboards Visuais', 'color: #f97316; font-size: 14px; font-weight: bold');
+    console.log('%c✅ Novo: Gráfico de pizza, Top 5 gastos, insights visuais', 'color: #10b981; font-size: 12px');
 
     const usuarioSalvo = localStorage.getItem('usuario');
     if (!usuarioSalvo) {
@@ -76,9 +93,16 @@ export default function Home() {
       const resLancamentos = await fetch('/api/lancamentos?limit=20');
       const dataLancamentos = await resLancamentos.json();
       setLancamentosRecentes(dataLancamentos.lancamentos || []);
+
       const resResumo = await fetch('/api/resumo');
       const dataResumo = await resResumo.json();
       setResumo(dataResumo);
+
+      // Carregar dados de categorias
+      const resCategorias = await fetch('/api/categorias-resumo');
+      const dataCategorias = await resCategorias.json();
+      setCategoriasResumo(dataCategorias.categorias || []);
+      setTop5Gastos(dataCategorias.top5Lancamentos || []);
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
     }
@@ -255,6 +279,13 @@ export default function Home() {
     finally { setSalvandoEdicao(false); }
   };
 
+  // Helper para gráfico de pizza
+  const getCoordinatesForPercent = (percent: number) => {
+    const x = 60 + 50 * Math.cos(2 * Math.PI * percent - Math.PI / 2);
+    const y = 60 + 50 * Math.sin(2 * Math.PI * percent - Math.PI / 2);
+    return [x, y];
+  };
+
   const formatarValor = (valor: number) => (valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   const formatarData = (data: string | Date) => new Date(data).toLocaleDateString('pt-BR');
   const formatarDataHora = (data: string | Date) => {
@@ -301,6 +332,81 @@ export default function Home() {
           <div className="border border-[#1e2a4a] rounded-xl p-3 text-center bg-[#151d32]"><p className="text-xs text-gray-500">Receitas</p><p className="text-lg font-bold text-green-400">{formatarValor(resumo.totalReceitas)}</p></div>
           <div className="border border-[#1e2a4a] rounded-xl p-3 text-center bg-[#151d32]"><p className="text-xs text-gray-500">Despesas</p><p className="text-lg font-bold text-red-400">{formatarValor(resumo.totalDespesas)}</p></div>
           <div className="border border-[#1e2a4a] rounded-xl p-3 text-center bg-[#151d32]"><p className="text-xs text-gray-500">Saldo</p><p className={"text-lg font-bold " + (resumo.saldo >= 0 ? 'text-green-400' : 'text-red-400')}>{formatarValor(resumo.saldo)}</p></div>
+        </div>
+      )}
+
+      {/* Gráficos e Insights */}
+      {categoriasResumo.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          {/* Gráfico de Pizza - Gastos por Categoria */}
+          <div className="border border-[#1e2a4a] rounded-xl p-4 bg-[#151d32]">
+            <h3 className="text-sm font-medium text-gray-400 mb-3">📊 Despesas por Categoria</h3>
+            <div className="flex items-center gap-4">
+              {/* Pizza Chart SVG */}
+              <svg width="120" height="120" viewBox="0 0 120 120" className="flex-shrink-0">
+                {(() => {
+                  const colors = ['#f97316', '#fb923c', '#fdba74', '#fed7aa', '#ffedd5'];
+                  let cumulativePercent = 0;
+                  const top5 = categoriasResumo.filter(c => c.total > 0).slice(0, 5);
+
+                  return top5.map((cat, index) => {
+                    const [x, y] = getCoordinatesForPercent(cumulativePercent);
+                    cumulativePercent += cat.percentual / 100;
+                    const [nextX, nextY] = getCoordinatesForPercent(cumulativePercent);
+                    const largeArcFlag = cat.percentual > 50 ? 1 : 0;
+
+                    const pathData = [
+                      `M 60 60`,
+                      `L ${x} ${y}`,
+                      `A 50 50 0 ${largeArcFlag} 1 ${nextX} ${nextY}`,
+                      `Z`
+                    ].join(' ');
+
+                    return <path key={cat.categoria} d={pathData} fill={colors[index % colors.length]} />;
+                  });
+                })()}
+              </svg>
+
+              {/* Legenda */}
+              <div className="flex-1 space-y-1">
+                {categoriasResumo.filter(c => c.total > 0).slice(0, 5).map((cat, index) => {
+                  const colors = ['#f97316', '#fb923c', '#fdba74', '#fed7aa', '#ffedd5'];
+                  return (
+                    <div key={cat.categoria} className="flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: colors[index % colors.length] }}></div>
+                        <span className="text-gray-400 truncate max-w-[100px]">{cat.categoria}</span>
+                      </div>
+                      <span className="text-white font-medium">{cat.percentual.toFixed(0)}%</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Top 5 Maiores Gastos */}
+          <div className="border border-[#1e2a4a] rounded-xl p-4 bg-[#151d32]">
+            <h3 className="text-sm font-medium text-gray-400 mb-3">🔥 Top 5 Maiores Gastos</h3>
+            <div className="space-y-2">
+              {top5Gastos.length === 0 ? (
+                <p className="text-xs text-gray-600 text-center py-4">Nenhum gasto registrado</p>
+              ) : (
+                top5Gastos.map((lanc, index) => (
+                  <div key={lanc.id} className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <span className="text-orange-500 font-bold">{index + 1}.</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white font-medium truncate">{lanc.descricao || lanc.categoria}</p>
+                        <p className="text-gray-500 text-[10px]">{lanc.categoria}</p>
+                      </div>
+                    </div>
+                    <span className="text-red-400 font-bold ml-2">{formatarValor(lanc.valor)}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         </div>
       )}
 
@@ -389,7 +495,7 @@ export default function Home() {
 
       {/* Indicador de versão */}
       <div className="fixed bottom-2 right-2 text-[10px] text-gray-600 bg-[#0f1629] px-2 py-1 rounded border border-[#1e2a4a]">
-        v3.0 • {new Date().toISOString().split('T')[0]}
+        v3.1-FASE1 • {new Date().toISOString().split('T')[0]}
       </div>
     </main>
   );
