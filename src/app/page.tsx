@@ -46,6 +46,10 @@ export default function Home() {
   const [resumo, setResumo] = useState<Resumo | null>(null);
   const [categoriasResumo, setCategoriasResumo] = useState<CategoriaResumo[]>([]);
   const [top5Gastos, setTop5Gastos] = useState<Top5Lancamento[]>([]);
+  const [mesSelecionado, setMesSelecionado] = useState(() => {
+    const hoje = new Date();
+    return `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;
+  });
   const [erro, setErro] = useState('');
   const [sucesso, setSucesso] = useState('');
   const [editando, setEditando] = useState<string | null>(null);
@@ -59,8 +63,8 @@ export default function Home() {
 
   useEffect(() => {
     // Log de versão para debug
-    console.log('%c🚀 Nardotos Finance v3.1 - FASE 1: Dashboards Visuais', 'color: #f97316; font-size: 14px; font-weight: bold');
-    console.log('%c✅ Novo: Gráfico de pizza, Top 5 gastos, insights visuais', 'color: #10b981; font-size: 12px');
+    console.log('%c🚀 Nardotos Finance v3.2 - FASE 1 Corrigida', 'color: #f97316; font-size: 14px; font-weight: bold');
+    console.log('%c✅ Seletor de mês, filtro de DESPESAS, cores contrastantes, comparação visual', 'color: #10b981; font-size: 12px');
 
     const usuarioSalvo = localStorage.getItem('usuario');
     if (!usuarioSalvo) {
@@ -88,18 +92,25 @@ export default function Home() {
     }
   }, [filtro, lancamentosRecentes]);
 
+  // Recarregar dados quando mudar o mês
+  useEffect(() => {
+    if (usuario) {
+      carregarDados();
+    }
+  }, [mesSelecionado]);
+
   const carregarDados = async () => {
     try {
-      const resLancamentos = await fetch('/api/lancamentos?limit=20');
+      const resLancamentos = await fetch(`/api/lancamentos?limit=20&mes=${mesSelecionado}`);
       const dataLancamentos = await resLancamentos.json();
       setLancamentosRecentes(dataLancamentos.lancamentos || []);
 
-      const resResumo = await fetch('/api/resumo');
+      const resResumo = await fetch(`/api/resumo?mes=${mesSelecionado}`);
       const dataResumo = await resResumo.json();
       setResumo(dataResumo);
 
-      // Carregar dados de categorias
-      const resCategorias = await fetch('/api/categorias-resumo');
+      // Carregar dados de categorias (apenas do mês selecionado)
+      const resCategorias = await fetch(`/api/categorias-resumo?mes=${mesSelecionado}`);
       const dataCategorias = await resCategorias.json();
       setCategoriasResumo(dataCategorias.categorias || []);
       setTop5Gastos(dataCategorias.top5Lancamentos || []);
@@ -299,6 +310,19 @@ export default function Home() {
   };
   const logout = () => { localStorage.removeItem('usuario'); router.push('/login'); };
 
+  // Funções para navegação de mês
+  const mudarMes = (direcao: number) => {
+    const [ano, mes] = mesSelecionado.split('-').map(Number);
+    const novaData = new Date(ano, mes - 1 + direcao, 1);
+    setMesSelecionado(`${novaData.getFullYear()}-${String(novaData.getMonth() + 1).padStart(2, '0')}`);
+  };
+
+  const getNomeMes = (mesAno: string) => {
+    const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    const [ano, mes] = mesAno.split('-');
+    return `${meses[parseInt(mes) - 1]} ${ano}`;
+  };
+
   if (!usuario) return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div></div>;
 
   return (
@@ -327,6 +351,13 @@ export default function Home() {
         </button>
       </div>
 
+      {/* Seletor de Mês */}
+      <div className="flex items-center justify-center gap-4 mb-6">
+        <button onClick={() => mudarMes(-1)} className="text-gray-400 hover:text-orange-400 text-2xl px-2 transition">&lt;</button>
+        <h2 className="font-bold text-lg min-w-[180px] text-center text-white">{getNomeMes(mesSelecionado)}</h2>
+        <button onClick={() => mudarMes(1)} className="text-gray-400 hover:text-orange-400 text-2xl px-2 transition">&gt;</button>
+      </div>
+
       {resumo && (
         <div className="grid grid-cols-3 gap-3 mb-6">
           <div className="border border-[#1e2a4a] rounded-xl p-3 text-center bg-[#151d32]"><p className="text-xs text-gray-500">Receitas</p><p className="text-lg font-bold text-green-400">{formatarValor(resumo.totalReceitas)}</p></div>
@@ -345,7 +376,7 @@ export default function Home() {
               {/* Pizza Chart SVG */}
               <svg width="120" height="120" viewBox="0 0 120 120" className="flex-shrink-0">
                 {(() => {
-                  const colors = ['#f97316', '#fb923c', '#fdba74', '#fed7aa', '#ffedd5'];
+                  const colors = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6']; // vermelho, azul, verde, amarelo, roxo
                   let cumulativePercent = 0;
                   const top5 = categoriasResumo.filter(c => c.total > 0).slice(0, 5);
 
@@ -370,7 +401,7 @@ export default function Home() {
               {/* Legenda */}
               <div className="flex-1 space-y-1">
                 {categoriasResumo.filter(c => c.total > 0).slice(0, 5).map((cat, index) => {
-                  const colors = ['#f97316', '#fb923c', '#fdba74', '#fed7aa', '#ffedd5'];
+                  const colors = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6']; // vermelho, azul, verde, amarelo, roxo
                   return (
                     <div key={cat.categoria} className="flex items-center justify-between text-xs">
                       <div className="flex items-center gap-2">
@@ -405,6 +436,56 @@ export default function Home() {
                   </div>
                 ))
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Gráfico de Comparação Receitas vs Despesas */}
+      {resumo && (
+        <div className="border border-[#1e2a4a] rounded-xl p-4 mb-6 bg-[#151d32]">
+          <h3 className="text-sm font-medium text-gray-400 mb-4">📊 Receitas vs Despesas</h3>
+          <div className="space-y-3">
+            {/* Receitas */}
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs text-gray-400">Receitas</span>
+                <span className="text-sm font-bold text-green-400">{formatarValor(resumo.totalReceitas)}</span>
+              </div>
+              <div className="h-8 bg-[#0f1629] rounded-lg overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-green-600 to-green-400 flex items-center justify-end pr-2 transition-all duration-500"
+                  style={{ width: `${resumo.totalReceitas > 0 ? Math.min((resumo.totalReceitas / Math.max(resumo.totalReceitas, resumo.totalDespesas)) * 100, 100) : 0}%` }}
+                >
+                  <span className="text-white text-xs font-bold">{resumo.totalReceitas > 0 ? '💰' : ''}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Despesas */}
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs text-gray-400">Despesas</span>
+                <span className="text-sm font-bold text-red-400">{formatarValor(resumo.totalDespesas)}</span>
+              </div>
+              <div className="h-8 bg-[#0f1629] rounded-lg overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-red-600 to-red-400 flex items-center justify-end pr-2 transition-all duration-500"
+                  style={{ width: `${resumo.totalDespesas > 0 ? Math.min((resumo.totalDespesas / Math.max(resumo.totalReceitas, resumo.totalDespesas)) * 100, 100) : 0}%` }}
+                >
+                  <span className="text-white text-xs font-bold">{resumo.totalDespesas > 0 ? '💸' : ''}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Saldo */}
+            <div className="pt-2 border-t border-[#1e2a4a]">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-400">Saldo do Mês</span>
+                <span className={`text-lg font-bold ${resumo.saldo >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                  {resumo.saldo >= 0 ? '↑' : '↓'} {formatarValor(Math.abs(resumo.saldo))}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -495,7 +576,7 @@ export default function Home() {
 
       {/* Indicador de versão */}
       <div className="fixed bottom-2 right-2 text-[10px] text-gray-600 bg-[#0f1629] px-2 py-1 rounded border border-[#1e2a4a]">
-        v3.1-FASE1 • {new Date().toISOString().split('T')[0]}
+        v3.2 • {new Date().toISOString().split('T')[0]}
       </div>
     </main>
   );

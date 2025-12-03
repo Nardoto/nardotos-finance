@@ -31,26 +31,33 @@ export async function GET(request: NextRequest) {
       snapshot = await lancamentosRef.get();
     }
 
-    // Agrupar por categoria
+    // Agrupar por categoria (APENAS DESPESAS para o gráfico)
     const categorias = new Map<string, { total: number; quantidade: number; lancamentos: any[] }>();
+    const todosLancamentos: any[] = [];
 
     snapshot.docs.forEach(doc => {
       const data = doc.data();
-      const categoria = data.categoria || 'OUTROS';
-      const valor = data.valor || 0;
-
-      if (!categorias.has(categoria)) {
-        categorias.set(categoria, { total: 0, quantidade: 0, lancamentos: [] });
-      }
-
-      const cat = categorias.get(categoria)!;
-      cat.total += valor;
-      cat.quantidade += 1;
-      cat.lancamentos.push({
+      const lancamento = {
         id: doc.id,
         ...data,
         data: data.data?.toDate?.() || data.data
-      });
+      };
+      todosLancamentos.push(lancamento);
+
+      // Apenas DESPESAS vão para o agrupamento por categoria
+      if (data.tipo === 'DESPESA') {
+        const categoria = data.categoria || 'OUTROS';
+        const valor = data.valor || 0;
+
+        if (!categorias.has(categoria)) {
+          categorias.set(categoria, { total: 0, quantidade: 0, lancamentos: [] });
+        }
+
+        const cat = categorias.get(categoria)!;
+        cat.total += valor;
+        cat.quantidade += 1;
+        cat.lancamentos.push(lancamento);
+      }
     });
 
     // Calcular total geral para percentuais
@@ -69,12 +76,7 @@ export async function GET(request: NextRequest) {
       }))
       .sort((a, b) => b.total - a.total); // Ordenar por valor decrescente
 
-    // Top 5 maiores lançamentos individuais
-    const todosLancamentos: any[] = [];
-    categorias.forEach(cat => {
-      todosLancamentos.push(...cat.lancamentos);
-    });
-
+    // Top 5 maiores lançamentos individuais (DESPESAS)
     const top5Lancamentos = todosLancamentos
       .filter(l => l.tipo === 'DESPESA')
       .sort((a, b) => b.valor - a.valor)
