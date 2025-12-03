@@ -1086,7 +1086,7 @@ export default function Home() {
 
       {/* Indicador de versão */}
       <div className="fixed bottom-2 left-2 text-[10px] text-gray-600 bg-[#0f1629] px-2 py-1 rounded border border-[#1e2a4a]">
-        v3.7 • {new Date().toISOString().split('T')[0]}
+        v3.7.2 • {new Date().toISOString().split('T')[0]}
       </div>
     </main>
   );
