@@ -41,6 +41,10 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
+    // Log de versão para debug
+    console.log('%c🚀 Nardotos Finance v3.0 - Build: 2025-12-02 21:15', 'color: #f97316; font-size: 14px; font-weight: bold');
+    console.log('%c✅ Correções aplicadas: API resumo, dashboard e lançamentos', 'color: #10b981; font-size: 12px');
+
     const usuarioSalvo = localStorage.getItem('usuario');
     if (!usuarioSalvo) {
       router.push('/login');
