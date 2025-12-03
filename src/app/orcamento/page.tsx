@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 interface Orcamento {
@@ -11,7 +11,7 @@ interface Orcamento {
   categorias: Record<string, number>;
 }
 
-export default function OrcamentoPage() {
+function OrcamentoContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [usuario, setUsuario] = useState<string | null>(null);
@@ -280,5 +280,17 @@ export default function OrcamentoPage() {
         </ul>
       </div>
     </main>
+  );
+}
+
+export default function OrcamentoPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+      </div>
+    }>
+      <OrcamentoContent />
+    </Suspense>
   );
 }
