@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/firebase-admin';
+import { getAdminDb } from '@/lib/firebase-admin';
 
 export async function GET() {
   try {
+    const db = getAdminDb();
     const hoje = new Date();
     const meses = [];
 
