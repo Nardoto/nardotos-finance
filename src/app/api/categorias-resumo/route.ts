@@ -34,13 +34,11 @@ export async function GET(request: NextRequest) {
       snapshot = await q.get();
     } else {
       // Pegar tudo se não especificar mês
-      let q = lancamentosRef;
-
       if (conta) {
-        q = q.where('conta', '==', conta);
+        snapshot = await lancamentosRef.where('conta', '==', conta).get();
+      } else {
+        snapshot = await lancamentosRef.get();
       }
-
-      snapshot = await q.get();
     }
 
     // Agrupar por categoria (APENAS DESPESAS para o gráfico)

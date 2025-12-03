@@ -52,13 +52,11 @@ export async function GET(request: NextRequest) {
       });
     } else {
       // Sem filtro de mês - retorna TODOS os lançamentos
-      let q = lancamentosRef;
-
       if (conta) {
-        q = q.where('conta', '==', conta);
+        snapshot = await lancamentosRef.where('conta', '==', conta).get();
+      } else {
+        snapshot = await lancamentosRef.get();
       }
-
-      snapshot = await q.get();
     }
 
     let totalReceitas = 0;
